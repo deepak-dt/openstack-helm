@@ -236,6 +236,21 @@ OpenStack services depend upon them.
   helm install --name=libvirt ./libvirt --namespace=openstack
   helm install --name=openvswitch ./openvswitch --namespace=openstack
 
+**Install Open vSwitch or OpenContrail as neutron backend:**
+
+If you intend to install openvswitch as  neutron backend
+
+.. code-block:: shell
+
+  helm install --namespace=openstack --name=openvswitch ./openvswitch
+
+If you intend to install opencontrail as neutron backend.
+
+.. code-block:: shell
+
+  helm install --namespace=openstack --name=opencontrail ./opencontrail
+
+
 Once the OpenStack infrastructure components are installed and running, the
 OpenStack services can be installed.  In the below examples the default values
 that would be used in a production-like environment have been overridden with
