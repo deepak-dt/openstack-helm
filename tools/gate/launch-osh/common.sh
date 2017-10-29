@@ -32,6 +32,11 @@ elif [ "x$SDN_PLUGIN" == "xlinuxbridge" ]; then
   # by kubeadm-aio docker image
   kubectl label nodes openvswitch- --all --namespace=openstack --overwrite
   kubectl label nodes linuxbridge=enabled --all --namespace=openstack --overwrite
+elif [ "x$SDN_PLUGIN" == "xopencontrail" ]; then
+  # first unlabel nodes with 'openvswitch' tag, which is applied by default
+  # by kubeadm-aio docker image
+  kubectl label nodes openvswitch- --all --namespace=openstack --overwrite
+  kubectl label nodes opencontrail.org/controller=enabled --all --namespace=openstack --overwrite
 fi
 
 helm install --namespace=openstack ${WORK_DIR}/dns-helper --name=dns-helper
