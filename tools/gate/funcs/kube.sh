@@ -74,9 +74,7 @@ function kube_wait_for_nodes {
 function kubeadm_aio_reqs_install {
   if [ "x$HOST_OS" == "xubuntu" ]; then
     sudo apt-get update -y
-    sudo apt-get install -y --no-install-recommends -qq \
-            docker.io \
-            jq
+    sudo apt-get install -y --no-install-recommends -qq jq
   elif [ "x$HOST_OS" == "xcentos" ]; then
     sudo yum install -y \
             epel-release
