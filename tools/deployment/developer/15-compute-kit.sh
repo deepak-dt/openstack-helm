@@ -34,10 +34,14 @@ else
 fi
 
 #NOTE: Deploy neutron
+#helm install ./neutron \
+#    --namespace=openstack \
+#    --name=neutron \
+#    --values=./tools/overrides/mvp/neutron-ovs.yaml
 helm install ./neutron \
     --namespace=openstack \
     --name=neutron \
-    --values=./tools/overrides/mvp/neutron-ovs.yaml
+    --values=./tools/overrides/mvp/neutron-opencontrail.yaml
 
 #NOTE: Wait for deploy
 ./tools/deployment/developer/wait-for-pods.sh openstack

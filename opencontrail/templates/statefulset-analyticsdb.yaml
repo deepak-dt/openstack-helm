@@ -46,7 +46,7 @@ spec:
                 values:
                 - {{ .Values.labels.controller.node_selector_value }}
       initContainers:
-{{ tuple $envAll $dependencies "[]" | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+{{ tuple $envAll $dependencies list | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
       tolerations:
       - key: node-role.kubernetes.io/master
         operator: Exists
