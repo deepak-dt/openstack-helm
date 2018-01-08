@@ -33,6 +33,11 @@ elif [ "x$SDN_PLUGIN" == "xlinuxbridge" ]; then
   # by kubeadm-aio docker image
   kubectl label nodes openvswitch- --all --overwrite
   kubectl label nodes linuxbridge=enabled --all --overwrite
+elif [ "x$SDN_PLUGIN" == "xopencontrail" ]; then
+  # first unlabel nodes with 'openvswitch' tag, which is applied by default
+  # by kubeadm-aio docker image
+  kubectl label nodes openvswitch- --all --overwrite
+  kubectl label nodes opencontrail.org/controller=enabled --all --overwrite
 fi
 
 #FIXME(portdirect): Ensure RBAC rules are essentially open until support added
