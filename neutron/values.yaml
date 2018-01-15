@@ -982,7 +982,7 @@ conf:
       #interface_driver: openvswitch
       # api_extensions_path can be:
       # /usr/lib/python2.7/dist-packages/neutron_plugin_contIrail/extensions:/usr/lib/python2.7/dist-packages/neutron_lbaas/extensions for opencontrail
-      api_extensions_path: /usr/lib/python2.7/dist-packages/neutron_plugin_contIrail/extensions:/usr/lib/python2.7/dist-packages/neutron_lbaas/extensions
+      api_extensions_path: /usr/lib/python2.7/dist-packages/neutron_plugin_contrail/extensions:/usr/lib/python2.7/dist-packages/neutron_lbaas/extensions
     quotas:
       quota_network: -1
       quota_subnet: -1
@@ -990,6 +990,7 @@ conf:
       # quota_driver can be:
       # neutron_plugin_contrail.plugins.opencontrail.quota.driver.QuotaDriver for opencontrail
       # quota_driver:
+      quota_driver: neutron_plugin_contrail.plugins.opencontrail.quota.driver.QuotaDriver
     oslo_concurrency:
       lock_path: /var/lib/neutron/tmp
     database:
