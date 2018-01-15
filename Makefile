@@ -44,4 +44,16 @@ clean:
 	rm -f */requirements.lock
 	-rmdir -p */charts
 
+pull-all-images:
+	@./tools/pull-images.sh
+
+pull-images:
+	@./tools/pull-images.sh $(filter-out $@,$(MAKECMDGOALS))
+
+dev-deploy:
+	@./tools/gate/devel/start.sh $(filter-out $@,$(MAKECMDGOALS))
+
+%:
+	@:
+
 .PHONY: $(EXCLUDES) $(CHARTS)

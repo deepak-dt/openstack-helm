@@ -256,10 +256,6 @@ pod:
     neutron_bootstrap:
       init_container: null
       neutron_bootstrap:
-    ## Deepak for opencontrail, uncomment contrail-vrouter-agent
-    contrail-vrouter-agent:
-      init_container: null
-      contrail-vrouter-agent:
   replicas:
     server: 1
   lifecycle:
@@ -967,10 +963,12 @@ conf:
       allow_overlapping_ips: True
       # core_plugin can be: ml2, calico,
       # neutron_plugin_contrail.plugins.opencontrail.contrail_plugin.NeutronPluginContrailCoreV2 for opencontrail
+      # core_plugin: ml2
       core_plugin: neutron_plugin_contrail.plugins.opencontrail.contrail_plugin.NeutronPluginContrailCoreV2
       # service_plugin can be: router, odl-router, empty for calico,
       # networking_ovn.l3.l3_ovn.OVNL3RouterPlugin for OVN,
       # neutron_plugin_contrail.plugins.opencontrail.loadbalancer.v2.plugin.LoadBalancerPluginV2 for opencontrail
+      # service_plugins: router
       service_plugins: neutron_plugin_contrail.plugins.opencontrail.loadbalancer.v2.plugin.LoadBalancerPluginV2
       metadata_proxy_socket: /var/lib/neutron/openstack-helm/metadata_proxy
       allow_automatic_l3agent_failover: True
@@ -987,14 +985,15 @@ conf:
       # interface_driver: openvswitch
       # api_extensions_path can be:
       # /usr/lib/python2.7/dist-packages/neutron_plugin_contIrail/extensions:/usr/lib/python2.7/dist-packages/neutron_lbaas/extensions for opencontrail
-      # api_extensions_path: /usr/lib/python2.7/dist-packages/neutron_plugin_contIrail/extensions:/usr/lib/python2.7/dist-packages/neutron_lbaas/extensions
+      api_extensions_path: /usr/lib/python2.7/dist-packages/neutron_plugin_contrail/extensions:/usr/lib/python2.7/dist-packages/neutron_lbaas/extensions
     quotas:
       quota_network: -1
       quota_subnet: -1
       quota_port: -1
       # quota_driver can be:
       # neutron_plugin_contrail.plugins.opencontrail.quota.driver.QuotaDriver for opencontrail
-      # quota_driver: neutron_plugin_contrail.plugins.opencontrail.quota.driver.QuotaDriver
+      # quota_driver:
+      quota_driver: neutron_plugin_contrail.plugins.opencontrail.quota.driver.QuotaDriver
     oslo_concurrency:
       lock_path: /var/lib/neutron/tmp
     database:
@@ -1017,12 +1016,12 @@ conf:
     neutron_plugin_conf: ContrailPlugin.ini
     opencontrail:
       APISERVER:
-        api_server_ip: 10.87.65.153
+        api_server_ip: 10.87.65.154
         api_server_port: 8082
         contrail_extensions: "ipam:neutron_plugin_contrail.plugins.opencontrail.contrail_plugin_ipam.NeutronPluginContrailIpam,policy:neutron_plugin_contrail.plugins.opencontrail.contrail_plugin_policy.NeutronPluginContrailPolicy,route-table:neutron_plugin_contrail.plugins.opencontrail.contrail_plugin_vpc.NeutronPluginContrailVpc,contrail:None,service-interface:None,vf-binding:None"
         multi_tenancy: True
       COLLECTOR:
-        analytics_api_ip: 10.87.65.153
+        analytics_api_ip: 10.87.65.154
         analytics_api_port: 8081
       KEYSTONE:
         admin_user: admin
