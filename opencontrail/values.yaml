@@ -493,7 +493,9 @@ manifests:
   statefulset_controller: true
   deployment_analytics: true
   statefulset_analyticsdb: true
-  statefulset_agent: true
+  # Deepak
+  #statefulset_agent: true
+  daemonset_agent: true
   controller_service: true
   configmap_etc: true
   # for cloud_orchestrator "kubernetes", set ths to false
