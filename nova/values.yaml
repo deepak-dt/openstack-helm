@@ -1516,7 +1516,8 @@ manifests:
   job_ks_placement_endpoints: true
   job_ks_placement_service: true
   job_ks_placement_user: true
-  job_cell_setup: true
+# Deepak
+  job_cell_setup: false
   pdb_metadata: true
   pdb_placement: true
   pdb_osapi: true
