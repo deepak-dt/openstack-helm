@@ -1008,8 +1008,8 @@ conf:
       auth_version: v3
   plugins:
     # neutron_plugin_framework can be: ml2, opencontrail
-    neutron_plugin_framework: opencontrail
     # neutron_plugin_conf can be: ml2_conf.ini, ContrailPlugin.ini
+    neutron_plugin_framework: opencontrail
     neutron_plugin_conf: ContrailPlugin.ini
     opencontrail:
       APISERVER:
