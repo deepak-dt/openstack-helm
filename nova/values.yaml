@@ -69,7 +69,9 @@ images:
     spiceproxy: docker.io/kolla/ubuntu-source-nova-spicehtml5proxy:3.0.3
     spiceproxy_assets: docker.io/kolla/ubuntu-source-nova-spicehtml5proxy:3.0.3
     consoleauth: docker.io/kolla/ubuntu-source-nova-consoleauth:3.0.3
-    compute: docker.io/kolla/ubuntu-source-nova-compute:3.0.3
+    # for opencontrail use the below nova-compute image
+    compute: docker.io/madhukar32/ubuntu-source-nova-compute:3.0.4
+    #compute: docker.io/kolla/ubuntu-source-nova-compute:3.0.3
     compute_ssh: docker.io/kolla/ubuntu-source-nova-ssh:3.0.3
     placement: docker.io/kolla/ubuntu-source-nova-placement-api:3.0.3-beta.1
     bootstrap: docker.io/kolla/ubuntu-source-heat-engine:3.0.3
@@ -236,7 +238,8 @@ dependencies:
     daemonset:
     - libvirt
     # this should be set to corresponding neutron L2 agent
-    - neutron-ovs-agent
+    # for opencontrail, set to contrail-vrouter-agent
+    - contrail-vrouter-agent
   consoleauth:
     jobs:
     - nova-db-sync
@@ -1552,7 +1555,8 @@ manifests:
   job_ks_placement_endpoints: true
   job_ks_placement_service: true
   job_ks_placement_user: true
-  job_cell_setup: true
+# Deepak
+  job_cell_setup: false
   pdb_metadata: true
   pdb_placement: true
   pdb_osapi: true

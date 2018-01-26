@@ -1,0 +1,506 @@
+images:
+  tags:
+    controller: "docker.io/opencontrail/contrail-controller-ubuntu16.04:4.0.2.0"
+    analyticsdb: "docker.io/opencontrail/contrail-analyticsdb-ubuntu16.04:4.0.2.0"
+    analytics: "docker.io/opencontrail/contrail-analytics-ubuntu16.04:4.0.2.0"
+    kubemanager: "docker.io/opencontrail/contrail-kube-manager-ubuntu16.04:4.0.2.0"
+    vrouter_agent: "docker.io/opencontrail/contrail-agent-ubuntu16.04:4.0.2.0"
+    kubernetes_agent: "docker.io/opencontrail/contrail-kubernetes-agent-ubuntu16.04:4.0.2.0"
+    register_vrouter: "docker.io/opencontrail/contrail-agent-ubuntu16.04:4.0.2.0"
+    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.2.1
+    # vrouter_compiler: "contrail-vrouter-compiler-centos7:4.0.2.0"
+  imagePullPolicy: "IfNotPresent"
+
+labels:
+  controller:
+    node_selector_key: opencontrail.org/controller
+    node_selector_value: "enabled"
+  analytics:
+    node_selector_key: opencontrail.org/controller
+    node_selector_value: "enabled"
+  analyticsdb:
+    node_selector_key: opencontrail.org/controller
+    node_selector_value: "enabled"
+  agent:
+    node_selector_key: openstack-compute-node
+    node_selector_value: "enabled"
+  kubemanager:
+    node_selector_key: opencontrail.org/controller
+    node_selector_value: "enabled"
+
+dependencies:
+  contrail_controller:
+#    jobs:
+#    - congress-db-sync
+#    - congress-ks-user
+#    - congress-ks-endpoints
+    services:
+    - service: contrail_controller
+      endpoint: discovery
+  contrail_analyticsdb:
+#    jobs:
+#    - congress-db-sync
+#    - congress-ks-user
+#    - congress-ks-endpoints
+    services:
+    - service: contrail_analyticsdb
+      endpoint: discovery
+
+conf:
+  # host_os - (OPTIONAL) host operating system release. Sample values "ubuntu" and "centos". Default is ubuntu
+  host_os: ubuntu
+  global_config:
+    # global section configuration needed by all containers
+    GLOBAL:
+        # *_nodes - comma seperated list of controller server IP addresses
+        # Ex: controller_nodes: 10.87.65.153,10.87.65.153
+        # *_ip - virtual IP handled by load balancer in case of multi-node
+        # enable_*_service - Flag to enable opencontrail service
+
+        controller_nodes: 10.87.65.153
+        controller_ip: 10.87.65.153
+        enable_control_service: "true"
+
+        analyticsdb_nodes: 10.87.65.153
+        # analyticsdb_cassandra_user: ''
+        # analyticsdb_cassandra_password: ''
+
+        analytics_nodes: 10.87.65.153
+        # analytics_ip:
+
+        # config_nodes:
+        # config_ip:
+        # enable_config_service: "true"
+        # configdb_cassandra_user: ''
+        # configdb_cassandra_password: ''
+
+        # webui_nodes:
+        # enable_webui_service: "true"
+
+        # In multi-controller systems, all hosts in the cluster should be reachable
+        # using its own hostname which is requirement for rabbitmq, so for that /etc/hosts entries are required,
+        # unless there is an external dns infrastructure to support it
+        # hosts_entries: { "host_name_1" : "host_ip_1", "host_name_2" : "host_ip_2" }
+
+        # cloud_orchestrator - valid values are 'kubernetes', 'openstack', 'openshift', 'mesos', 'vcenter'
+        cloud_orchestrator: openstack
+
+        # uve_partition_count: ''
+
+        # comma separated list of external servers like rabbitmq, zookeeper, cassandra
+        # external_rabbitmq_servers: 192.168.10.10,192.168.10.11
+        # external_zookeeper_servers: 192.168.10.10,192.168.10.11
+        # external_analyticsdb_zookeeper_servers: 192.168.10.10,192.168.10.11
+        # external_configdb_servers: 192.168.10.10,192.168.10.11
+
+        # Flags to enable ssl connections
+        # sandesh_ssl_enable: "false"
+        # introspect_ssl_enable: "false"
+
+        # Falgs to enable xmpp auth
+        # xmpp_auth_enable: "false"
+        # xmpp_dns_auth_enable: "false"
+
+        # apiserver_auth_protocol: "http"
+        # apiserver_certfile:
+        # apiserver_keyfile:
+        # apiserver_cafile:
+        # apiserver_insecure:
+
+        # neutron_metadata_ip:
+        # neutron_metadata_port:
+
+        # Below minimum_diskgb numbers are for only test/POC environments and not for production
+        configdb_minimum_diskgb: 5
+        analyticsdb_minimum_diskgb: 20
+
+  keystone_config:
+     KEYSTONE:
+       version: v3
+       admin_port: 35357
+       public_port: 80
+       auth_protocol: http
+       admin_user: admin
+       admin_password: password
+       admin_tenant: admin
+       insecure: True
+       user_domain_name: Default
+       project_domain_name: Default
+
+  rabbitmq_config:
+    RABBITMQ:
+      user: guest
+      password: guest
+      vhost: '/'
+      port: 5672
+      # owner:
+      # group:
+      # ssl:
+      # cacert:
+      # server_key:
+      # server_cert:
+      # ssl_port:
+      # ha_queues:
+
+  # Sections related to controller container
+  controller_config:
+    CONTROLLER:
+      encap_priority: "MPLSoUDP,MPLSoGRE,VXLAN"
+      # external_routers_list: { "name1": "ip1", "name2": "ip2" }
+      # bgp_asn: 64512
+      # flow_export_rate - flow export rate to the collector
+      # flow_export_rate:
+
+    WEBUI:
+      http_listen_port: 8080
+      https_listen_port: 8143
+      webui_storage_enable: 'false'
+      enable_underlay: 'false'
+      enable_mx: 'false'
+      enable_udd: 'false'
+      service_endpoint_from_config: 'true'
+      # server_options_key_file:
+      # server_options_cert_file:
+
+    CONTROL:
+      log: "var/log/contrail/contrail-control.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 8083
+      bgp_port: 3179
+      xmpp_server_port: 5269
+
+    DNS:
+      log: "/var/log/contrail/contrail-dns.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 8092
+      named_log_file: "/var/log/contrail/contrail-named.log"
+      dns_server_port: 53
+
+    SCHEMA:
+      log: "/var/log/contrail/contrail-schema.log"
+      log_level: "SYS_NOTICE"
+
+    SVC_MONITOR:
+      log: "/var/log/contrail/contrail-svc-monitor.log"
+      log_level: "SYS_NOTICE"
+
+    DEVICE_MANAGER:
+      log: "/var/log/contrail/contrail-device-manager.log"
+      log_level: "SYS_NOTICE"
+
+    CASSANDRA:
+      # commitlog_dir: "/var/lib/cassandra/commitlog"
+      # data_dirs: ["/var/lib/cassandra/data"]
+
+    # contrail_api section
+    API:
+      log: "/var/log/contrail/contrail-api.log"
+      log_level: "SYS_NOTICE"
+      listen_port: 8082
+      listen_address: "0.0.0.0"
+      list_optimization_enabled: "true"
+      # cloud_admin_role: ""
+      # global_read_only_role: ""
+      # aaa_mode - no-auth, cloud-admin, rbac
+      # for cloud_orchestrator "kubernetes", set ths to "no-auth"
+      aaa_mode: "cloud-admin"
+
+    ANALYTICS_API:
+      # aaa_mode - no-auth, cloud-admin, rbac
+      # for cloud_orchestrator "kubernetes", set ths to no-auth
+      aaa_mode: "cloud-admin"
+
+  # Sections related to analytics container
+  analytics_config:
+    ALARM_GEN:
+      log: "/var/log/contrail/contrail-alarm-gen.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 5995
+
+    ANALYTICS_API:
+      log: "/var/log/contrail/contrail-analytics-api.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 8090
+      listen_port: 8081
+      # aaa_mode - no-auth, cloud-admin, rbac
+      # for cloud_orchestrator "kubernetes", set ths to no-auth
+      aaa_mode: "cloud-admin"
+
+    ANALYTICS_COLLECTOR:
+      log: "/var/log/contrail/contrail-collector.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 8089
+      listen_port: 8086
+      analytics_flow_ttl: 48
+      analytics_statistics_ttl: 2160
+      analytics_config_audit_ttl: 24
+      analytics_data_ttl: 2
+
+    SNMP_COLLECTOR:
+      log: "/var/log/contrail/contrail-snmp-collector.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 5920
+      listen_port: 600
+      scan_frequency: 600
+      fast_scan_frequency: 60
+
+    TOPOLOGY:
+      log: "/var/log/contrail/contrail-topology.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 5921
+
+    QUERY_ENGINE:
+      log: "/var/log/contrail/contrail-query-engine.log"
+      log_level: "SYS_NOTICE"
+      introspect_port: 8091
+
+  # Sections related to analyticsdb container
+  analyticsdb_config:
+    CASSANDRA:
+      # commitlog_dir: "/var/lib/cassandra/commitlog"
+      # data_dirs: ["/var/lib/cassandra/data"]
+
+  # Sections related to kubemanager container
+  kubemanager_config:
+    KUBERNETES:
+      # api_server: 10.87.65.153
+      # cluster_name: k8s-default
+      # pod_subnets: "10.32.0.0/12"
+      # service_subnets: "10.96.0.0/12"
+      # cluster_project: "{'domain': 'default-domain', 'project': 'default'}"
+
+    KUBERNETES_VNC:
+      # public fip pool to be used for service/ingress.
+      # public_fip_pool: {'domain': 'domain-name', 'project': 'project-name', 'network': 'network-name', 'name': 'fip-pool-name' }
+
+  # Sections related to agent container
+  agent_config:
+    AGENT:
+      # ctrl_data_network:
+      compile_vrouter_module: true
+
+      # qos_queue_id_list: []
+      # qos_logical_queue_list: []
+      # qos_default_nic_queue: None
+      # qos_priority_tagging: ''
+      # priority_id_list: []
+      # priority_scheduling_list: []
+      # priority_bandwidth_list: []
+      # vrouter_module_params: None
+
+    HYPERVISOR:
+      type: "kvm"
+
+  kubernetesagent_config:
+    AGENT:
+
+  cassandra:
+    cluster_name: 'Test Cluster'
+    num_tokens: 256
+    hinted_handoff_enabled: true
+    hinted_handoff_throttle_in_kb: 1024
+    max_hints_delivery_threads: 2
+    batchlog_replay_throttle_in_kb: 1024
+    authenticator: AllowAllAuthenticator
+    authorizer: AllowAllAuthorizer
+    role_manager: CassandraRoleManager
+    roles_validity_in_ms: 2000
+    permissions_validity_in_ms: 2000
+    partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+    data_file_directories:
+        - /var/lib/cassandra/data
+    commitlog_directory: /var/lib/cassandra/commitlog
+    disk_failure_policy: stop
+    commit_failure_policy: stop
+    key_cache_size_in_mb:
+    key_cache_save_period: 14400
+    row_cache_size_in_mb: 0
+    row_cache_save_period: 0
+    counter_cache_size_in_mb:
+    counter_cache_save_period: 7200
+    saved_caches_directory: /var/lib/cassandra/saved_caches
+    commitlog_sync: periodic
+    commitlog_sync_period_in_ms: 10000
+    commitlog_segment_size_in_mb: 32
+    concurrent_reads: 32
+    concurrent_writes: 32
+    concurrent_counter_writes: 32
+    memtable_allocation_type: heap_buffers
+    index_summary_capacity_in_mb:
+    index_summary_resize_interval_in_minutes: 60
+    trickle_fsync: false
+    trickle_fsync_interval_in_kb: 10240
+    storage_port: 7000
+    ssl_storage_port: 7001
+    listen_address: null
+    broadcast_address: null
+    start_native_transport: true
+    native_transport_port: 9042
+    start_rpc: true
+    rpc_address: 0.0.0.0
+    rpc_port: 9160
+    broadcast_rpc_address: null
+    rpc_keepalive: true
+    rpc_server_type: sync
+    thrift_framed_transport_size_in_mb: 15
+    incremental_backups: false
+    snapshot_before_compaction: false
+    auto_snapshot: true
+    tombstone_warn_threshold: 1000
+    tombstone_failure_threshold: 100000
+    column_index_size_in_kb: 64
+    batch_size_warn_threshold_in_kb: 5
+    batch_size_fail_threshold_in_kb: 50
+    unlogged_batch_across_partitions_warn_threshold: 10
+    compaction_throughput_mb_per_sec: 16
+    compaction_large_partition_warning_threshold_mb: 100
+    sstable_preemptive_open_interval_in_mb: 50
+    read_request_timeout_in_ms: 5000
+    range_request_timeout_in_ms: 10000
+    write_request_timeout_in_ms: 2000
+    counter_write_request_timeout_in_ms: 5000
+    cas_contention_timeout_in_ms: 1000
+    truncate_request_timeout_in_ms: 60000
+    request_timeout_in_ms: 10000
+    cross_node_timeout: false
+    endpoint_snitch: SimpleSnitch
+    dynamic_snitch_update_interval_in_ms: 100 
+    dynamic_snitch_reset_interval_in_ms: 600000
+    dynamic_snitch_badness_threshold: 0.1
+    request_scheduler: org.apache.cassandra.scheduler.NoScheduler
+    server_encryption_options:
+        internode_encryption: none
+        keystore: conf/.keystore
+        keystore_password: cassandra
+        truststore: conf/.truststore
+        truststore_password: cassandra
+    client_encryption_options:
+        enabled: false
+        optional: false
+        keystore: conf/.keystore
+        keystore_password: cassandra
+    internode_compression: all
+    inter_dc_tcp_nodelay: false
+    tracetype_query_ttl: 86400
+    tracetype_repair_ttl: 604800
+    enable_user_defined_functions: false
+    windows_timer_interval: 1
+    auto_bootstrap: false
+    seed_provider:
+      - class_name: org.apache.cassandra.locator.SimpleSeedProvider
+        parameters:
+        - seeds: 127.0.0.1
+
+# typically overriden by environmental
+# values, but should include all endpoints
+# required by this chart
+endpoints:
+  namespace: openstack
+  cluster_domain_suffix: cluster.local
+  identity:
+    name: keystone
+    hosts:
+      default: keystone-api
+      public: keystone
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v3
+    scheme:
+      default: http
+    port:
+      admin:
+        default: 35357
+      api:
+        default: 80
+  network:
+    name: neutron
+    hosts:
+      default: neutron-server
+      public: neutron
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 9696
+        public: 80
+  compute:
+    name: nova
+    hosts:
+      default: nova-api
+      public: nova
+    host_fqdn_override:
+      default: null
+    path:
+      default: "/v2/%(tenant_id)s"
+    scheme:
+      default: 'http'
+    port:
+      api:
+        default: 8774
+        public: 80
+      novncproxy:
+        default: 6080
+  compute_metadata:
+    name: nova
+    hosts:
+      default: nova-metadata
+      public: metadata
+    host_fqdn_override:
+      default: null
+    path:
+      default: /
+    scheme:
+      default: 'http'
+    port:
+      metadata:
+        default: 8775
+        public: 80
+  image:
+    name: glance
+    hosts:
+      default: glance-api
+      public: glance
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+    scheme:
+      default: http
+    port:
+      api:
+        default: 9292
+        public: 80
+  contrail_controller:
+    hosts:
+      default: contrail-controller
+      discovery: contrail-controller-discovery
+  contrail_analyticsdb:
+    hosts:
+      default: contrail-analyticsdb
+      discovery: contrail-analyticsdb-discovery
+  contrail_analytics:
+    hosts:
+      default: contrail-analytics
+      discovery: contrail-analyticsdb-discovery
+
+
+manifests:
+  statefulset_controller: true
+  deployment_analytics: true
+  statefulset_analyticsdb: true
+  # Deepak
+  #statefulset_agent: true
+  daemonset_agent: true
+  controller_service: true
+  configmap_etc: true
+  # for cloud_orchestrator "kubernetes", set ths to false
+  configmap_bin: true
+  # for cloud_orchestrator "kubernetes", set ths to true
+  statefulset_kubemanager: false
+  # for cloud_orchestrator "kubernetes", set ths to true
+  rbac_contrail: false

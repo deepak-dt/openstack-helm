@@ -1,0 +1,118 @@
+{{/*
+Copyright 2017 The Openstack-Helm Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/}}
+
+{{- if .Values.manifests.statefulset_controller }}
+{{- $envAll := . }}
+{{- $cass_pod_name:=  tuple "contrail_controller" "internal" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup"}}
+{{- $cass_discovery_name:= tuple "contrail_controller" "discovery" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" -}}
+{{- $cass_seeds:=  printf "%s-0.%s" $cass_pod_name $cass_discovery_name -}}
+{{- $cassandra_data:= index .Values.conf.cassandra.data_file_directories 0 | quote -}}
+{{- $dependencies := .Values.dependencies.contrail_controller }}
+# host_os is a mandatory field
+{{- $_ := required ".Values.conf.host_os must be specified, valid values are ubuntu, centos" .Values.conf.host_os }}
+
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: {{ $cass_pod_name }}
+spec:
+  replicas: 1
+  serviceName: {{ tuple "contrail_controller" "discovery" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" }}
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "opencontrail" "controller" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.labels.controller.node_selector_key }}
+                operator: In
+                values:
+                - {{ .Values.labels.controller.node_selector_value }}
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      hostNetwork: false
+      containers:
+      - name: {{ $cass_pod_name }}
+        image: {{ .Values.images.tags.controller | quote }}
+        imagePullPolicy: {{ default "" .Values.images.imagePullPolicy | quote }}
+        command: 
+          - /tmp/start-cassandra.sh
+        env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: MAX_HEAP_SIZE
+            value: 1G
+          - name: HEAP_NEWSIZE
+            value: 200M
+          - name: CASSANDRA_SEEDS
+            value: {{ $cass_seeds }}
+          - name: CASSANDRA_CLUSTER_NAME
+            value: {{ $cass_pod_name }}
+          - name: CASSANDRA_DATA
+            value: {{ $cassandra_data }}
+          - name: GLOBAL__controller_ip
+            value: contrail-controller 
+        readinessProbe:
+          tcpSocket:
+            port: 9160
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: opencontrail-bin
+            mountPath: /tmp/start-cassandra.sh
+            subPath: start-cassandra.sh
+            readOnly: true
+          - name: opencontrail-etc
+            mountPath: /etc/contrailctl/controller.conf
+            subPath: controller.conf
+          - name: cassandra-data
+            mountPath: {{ $cassandra_data }}
+            readOnly: false
+          - name: zookeeper-data
+            mountPath: /var/lib/zookeeper
+          - name: opencontrail-etc
+            mountPath: /etc/cassandra/cassandra.yaml
+            subPath: cassandra.yaml
+            readOnly: false
+      volumes:
+      - name: opencontrail-bin
+        configMap:
+          name: opencontrail-bin
+          defaultMode: 0777
+      - name: opencontrail-etc
+        configMap:
+          name: opencontrail-etc
+      - name: zookeeper-data
+        hostPath:
+          path: /var/lib/config_zookeeper_data
+  volumeClaimTemplates:
+  - metadata:
+      name: cassandra-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: general
+{{- end }}

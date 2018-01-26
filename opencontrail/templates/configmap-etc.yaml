@@ -1,0 +1,92 @@
+{{- if .Values.manifests.configmap_etc }}
+{{- $envAll := . }}
+{{- $cloud_orchestrator := .Values.conf.global_config.GLOBAL.cloud_orchestrator }}
+
+{{- $cassandra_controller_pod_name:=  tuple "contrail_controller" "internal" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup"}}
+{{- $cassandra_controller_discovery_name:= tuple "contrail_controller" "discovery" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" -}}
+{{- $cassandra_controller_seeds:=  printf "%s-0.%s" $cassandra_controller_pod_name $cassandra_controller_discovery_name -}}
+{{- $cassandra_data:= index .Values.conf.cassandra.data_file_directories 0 | quote -}}
+
+{{- $cassandra_analyticsdb_pod_name:=  tuple "contrail_analyticsdb" "internal" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup"}}
+{{- $cassandra_analyticsdb_discovery_name:= tuple "contrail_analyticsdb" "discovery" . | include "helm-toolkit.endpoints.hostname_short_endpoint_lookup" -}}
+{{- $casssandra_analyticsdb_seeds:=  printf "%s-0.%s" $cassandra_analyticsdb_pod_name $cassandra_analyticsdb_discovery_name -}}
+{{- $cassandra_data:= index .Values.conf.cassandra.data_file_directories 0 | quote -}}
+
+{{- $dependencies := .Values.dependencies.contrail_controller }}
+
+{{- if empty .Values.conf.keystone_config.KEYSTONE.auth_url -}}
+{{- tuple "identity" "internal" "admin" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set .Values.conf.keystone_config.KEYSTONE "auth_url" | quote | trunc 0 -}}
+{{- end }}
+{{- if empty .Values.conf.keystone_config.KEYSTONE.ip -}}
+{{- tuple "identity" "internal" $envAll | include "helm-toolkit.endpoints.hostname_namespaced_endpoint_lookup" | set .Values.conf.keystone_config.KEYSTONE "ip" | quote | trunc 0 -}}
+{{- end }}
+
+{{- if empty .Values.conf.controller_config.WEBUI.nova_api_ip -}}
+{{- tuple "compute" "internal" $envAll | include "helm-toolkit.endpoints.hostname_namespaced_endpoint_lookup" | set .Values.conf.controller_config.WEBUI "nova_api_ip" | quote | trunc 0 -}}
+{{- end }}
+{{- if empty .Values.conf.controller_config.WEBUI.glance_api_ip -}}
+{{- tuple "image" "internal" $envAll | include "helm-toolkit.endpoints.hostname_namespaced_endpoint_lookup" | set .Values.conf.controller_config.WEBUI "glance_api_ip" | quote | trunc 0 -}}
+{{- end }}
+{{- if empty .Values.conf.controller_config.WEBUI.network_manager_ip -}}
+{{- tuple "network" "internal" $envAll | include "helm-toolkit.endpoints.hostname_namespaced_endpoint_lookup" | set .Values.conf.controller_config.WEBUI "network_manager_ip" | quote | trunc 0 -}}
+{{- end }}
+
+#FIXME - Waiting to be fixed in opencontrail code
+{{- if empty .Values.conf.global_config.GLOBAL.neutron_metadata_ip -}}
+{{- tuple "compute_metadata" "internal" $envAll | include "helm-toolkit.endpoints.hostname_namespaced_endpoint_lookup" | set .Values.conf.global_config.GLOBAL "neutron_metadata_ip" | quote | trunc 0 -}}
+{{- end }}
+{{- if empty .Values.conf.global_config.GLOBAL.neutron_metadata_port -}}
+{{- tuple "compute_metadata" "internal" "metadata" $envAll | include "helm-toolkit.endpoints.endpoint_port_lookup" | set .Values.conf.global_config.GLOBAL "neutron_metadata_port" | quote | trunc 0 -}}
+{{- end }}
+
+{{- if empty .Values.conf.controller_config.API.cassandra_server_list -}}
+{{- $cassandra_controller_seeds | set .Values.conf.controller_config.API "cassandra_server_list" | quote | trunc 0 -}}
+{{- end }}
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opencontrail-etc
+  labels:
+{{ tuple $envAll "opencontrail" "config" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+data:
+  global.conf: |+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.global_config | indent 4 }}
+
+  controller.conf: |+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.global_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.keystone_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.rabbitmq_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.controller_config | indent 4 }}
+
+  analytics.conf: |+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.global_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.keystone_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.rabbitmq_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.analytics_config | indent 4 }}
+
+  analyticsdb.conf: |+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.global_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.analyticsdb_config | indent 4 }}
+
+  kubemanager.conf: |+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.kubemanager_config | indent 4 }}
+
+  kubernetesagent.conf: |+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.kubernetesagent_config | indent 4 }}
+
+  agent.conf: |+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.agent_config | indent 4 }}
+
+{{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.keystone_config | indent 4 }}
+  cassandra.yaml: |+
+{{  toYaml .Values.conf.cassandra | indent 4 }}
+{{- end }}

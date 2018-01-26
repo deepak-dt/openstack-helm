@@ -1,0 +1,13 @@
+{{- if .Values.manifests.configmap_bin }}
+{{- $envAll := . }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opencontrail-bin
+data:
+  register-vrouter.sh: |+
+{{ tuple "bin/_register-vrouter.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+  start-cassandra.sh: |+
+{{ tuple "bin/_start-cassandra.sh.tpl" . | include "helm-toolkit.utils.template" | indent 4 }}
+{{- end }}
