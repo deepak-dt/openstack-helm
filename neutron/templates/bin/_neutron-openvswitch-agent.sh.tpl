@@ -18,8 +18,11 @@ limitations under the License.
 
 set -ex
 
+sleep 600
+
 exec neutron-openvswitch-agent \
   --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/plugins/ml2/ml2_conf.ini \
   --config-file /tmp/pod-shared/ml2-local-ip.ini \
+  --config-file /etc/neutron/plugins/ml2/taas.ini \
   --config-file /etc/neutron/plugins/ml2/openvswitch_agent.ini

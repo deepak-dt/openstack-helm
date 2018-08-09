@@ -38,6 +38,7 @@ images:
     neutron_linuxbridge_agent: docker.io/openstackhelm/neutron:newton
     neutron_sriov_agent: docker.io/openstackhelm/neutron:newton-sriov-1804
     neutron_sriov_agent_init: docker.io/openstackhelm/neutron:newton-sriov-1804
+    neutron_taas_agent: docker.io/openstackhelm/neutron:newton-sriov-1804
     dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
     image_repo_sync: docker.io/docker:17.07.0
   pull_policy: "IfNotPresent"
@@ -77,6 +78,9 @@ labels:
   server:
     node_selector_key: openstack-control-plane
     node_selector_value: enabled
+  taas:
+    node_selector_key: taas
+    node_selector_value: disabled
   test:
     node_selector_key: openstack-control-plane
     node_selector_value: enabled
@@ -201,6 +205,22 @@ dependencies:
               labels:
                 application: neutron
                 component: neutron-sriov-agent
+      taas:
+        dhcp:
+          pod:
+            - labels:
+                application: neutron
+                component: neutron-taas-agent
+        l3:
+          pod:
+            - labels:
+                application: neutron
+                component: neutron-taas-agent
+        metadata:
+          pod:
+            - labels:
+                application: neutron
+                component: neutron-taas-agent
   static:
     bootstrap:
       services:
@@ -359,6 +379,9 @@ pod:
     neutron_sriov_agent:
       init_container: null
       neutron_sriov_agent:
+    neutron_taas_agent:
+      init_container: null
+      neutron_taas_agent:
     neutron_tests:
       init_container: null
       neutron_tests:
@@ -399,6 +422,10 @@ pod:
           max_unavailable: 1
         sriov_agent:
           enabled: true
+          min_ready_seconds: 0
+          max_unavailable: 1
+        taas_agent:
+          enabled: false
           min_ready_seconds: 0
           max_unavailable: 1
     disruption_budget:
@@ -446,6 +473,13 @@ pod:
           memory: "1024Mi"
           cpu: "2000m"
       sriov:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      taas:
         requests:
           memory: "128Mi"
           cpu: "100m"
@@ -1550,7 +1584,16 @@ conf:
       # using ml2_type_vlan.network_vlan_ranges:
       # ml2_type_vlan:
       #   network_vlan_ranges: "external:1100:1110"
+      agent:
+        extensions: taas
     ml2_conf_sriov: null
+    taas:
+      taas:
+        driver: neutron_taas.services.taas.drivers.linux.ovs_taas.OvsTaasDriver
+#        driver: neutron_taas.services.taas.drivers.linux.sriov_nic_taas.SriovNicTaasDriver
+        enabled: True
+        vlan_range_start: 3000
+        vlan_range_end: 3500
     openvswitch_agent:
       agent:
         tunnel_types: vxlan
@@ -1580,6 +1623,9 @@ conf:
       sriov_nic:
         physical_device_mappings: physnet2:enp3s0f1
         exclude_devices: null
+  taas_plugin:
+    service_providers:
+      service_provider: TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default
   dhcp_agent:
     DEFAULT:
       #(NOTE)portdirect: if unset this is populated dyanmicly from the value in
@@ -1829,6 +1875,7 @@ manifests:
   daemonset_metadata_agent: true
   daemonset_ovs_agent: true
   daemonset_sriov_agent: true
+  daemonset_taas_agent: false
   deployment_server: true
   ingress_server: true
   job_bootstrap: true
