@@ -19,6 +19,8 @@ set -xe
 make nova
 make neutron
 
+OSH_EXTRA_HELM_ARGS="--values=./tools/overrides/releases/ocata/loci.yaml"
+
 #NOTE: Deploy nova
 : ${OSH_EXTRA_HELM_ARGS:=""}
 if [ "x$(systemd-detect-virt)" == "xnone" ]; then
@@ -50,6 +52,7 @@ conf:
       max_l3_agents_per_router: 1
       l3_ha_network_type: vxlan
       dhcp_agents_per_network: 1
+      service_plugins: trunk,taas
   plugins:
     ml2_conf:
       ml2_type_flat:
@@ -65,6 +68,7 @@ conf:
       linux_bridge:
         bridge_mappings: public:br-ex
 EOF
+
 helm upgrade --install neutron ./neutron \
     --namespace=openstack \
     --values=/tmp/neutron.yaml \
