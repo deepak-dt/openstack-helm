@@ -19,8 +19,8 @@ set -xe
 make pull-images nova
 make pull-images neutron
 
-export TAAS_COMPUTE_1='osh-taas-2'
-export TAAS_COMPUTE_2='osh-taas-3'
+export TAAS_COMPUTE_1='osh-aio'
+export TAAS_COMPUTE_2='osh-aio'
 
 OSH_EXTRA_HELM_ARGS="--values=./tools/overrides/releases/ocata/loci.yaml"
 
