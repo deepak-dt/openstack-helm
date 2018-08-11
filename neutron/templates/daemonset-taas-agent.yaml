@@ -1,0 +1,181 @@
+{{/*
+Copyright 2017 The Openstack-Helm Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/}}
+
+{{- define "neutron.taas_agent.daemonset" }}
+{{- $daemonset := index . 0 }}
+{{- $configMapName := index . 1 }}
+{{- $serviceAccountName := index . 2 }}
+{{- $dependencies := index . 3 }}
+{{- $envAll := index . 4 }}
+{{- with $envAll }}
+
+{{- $mounts_neutron_taas_agent := .Values.pod.mounts.neutron_taas_agent.neutron_taas_agent }}
+{{- $mounts_neutron_taas_agent_init := .Values.pod.mounts.neutron_taas_agent.init_container }}
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: neutron-taas-agent
+  labels:
+{{ tuple $envAll "neutron" "neutron-taas-agent" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+{{ tuple $envAll "neutron" "neutron-taas-agent" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 6 }}
+{{ tuple $envAll "taas_agent" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 2 }}
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "neutron" "neutron-taas-agent" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+        configmap-bin-hash: {{ tuple "configmap-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+        configmap-etc-hash: {{ tuple "configmap-etc.yaml" . | include "helm-toolkit.utils.hash" }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      nodeSelector:
+        {{ .Values.labels.taas.node_selector_key }}: {{ .Values.labels.taas.node_selector_value }}
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      {{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "10" ) }}
+      shareProcessNamespace: true
+      {{- else }}
+      hostPID: true
+      {{- end }}
+      initContainers:
+{{ tuple $envAll $dependencies $mounts_neutron_taas_agent_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+      containers:
+        - name: neutron-taas-agent
+          image: {{ .Values.images.tags.neutron_taas_agent }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.agent.taas | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          securityContext:
+            runAsUser: {{ .Values.pod.user.neutron.uid }}
+            privileged: true
+          command:
+            - /tmp/neutron-taas-agent.sh
+          volumeMounts:
+            - name: neutron-bin
+              mountPath: /tmp/neutron-taas-agent.sh
+              subPath: neutron-taas-agent.sh
+              readOnly: true
+            - name: pod-shared
+              mountPath: /tmp/pod-shared
+            - name: neutron-etc
+              mountPath: /etc/neutron/neutron.conf
+              subPath: neutron.conf
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/plugins/ml2/ml2_conf.ini
+              subPath: ml2_conf.ini
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/plugins/ml2/taas.ini
+              subPath: taas.ini
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/taas_plugin.ini
+              subPath: taas_plugin.ini
+              readOnly: true
+            - name: neutron-etc
+              # NOTE (Portdirect): We mount here to override Kollas
+              # custom sudoers file when using Kolla images, this
+              # location will also work fine for other images.
+              mountPath: /etc/sudoers.d/kolla_neutron_sudoers
+              subPath: neutron_sudoers
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.conf
+              subPath: rootwrap.conf
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/debug.filters
+              subPath: debug.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/dibbler.filters
+              subPath: dibbler.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/ipset-firewall.filters
+              subPath: ipset-firewall.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/l3.filters
+              subPath: l3.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/netns-cleanup.filters
+              subPath: netns-cleanup.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/dhcp.filters
+              subPath: dhcp.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/ebtables.filters
+              subPath: ebtables.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/iptables-firewall.filters
+              subPath: iptables-firewall.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/linuxbridge-plugin.filters
+              subPath: linuxbridge-plugin.filters
+              readOnly: true
+            - name: neutron-etc
+              mountPath: /etc/neutron/rootwrap.d/openvswitch-plugin.filters
+              subPath: openvswitch-plugin.filters
+              readOnly: true
+            - name: run
+              mountPath: /run
+{{ if $mounts_neutron_taas_agent.volumeMounts }}{{ toYaml $mounts_neutron_taas_agent.volumeMounts | indent 12 }}{{ end }}
+      volumes:
+        - name: varlibopenvswitch
+          emptyDir: {}
+        - name: pod-shared
+          emptyDir: {}
+        - name: neutron-bin
+          configMap:
+            name: neutron-bin
+            defaultMode: 0555
+        - name: neutron-etc
+          configMap:
+            name: {{ $configMapName }}
+            defaultMode: 0444
+        - name: run
+          hostPath:
+            path: /run
+        - name: host-rootfs
+          hostPath:
+            path: /
+{{ if $mounts_neutron_taas_agent.volumes }}{{ toYaml $mounts_neutron_taas_agent.volumes | indent 8 }}{{ end }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.manifests.daemonset_taas_agent }}
+{{- $envAll := . }}
+{{- $daemonset := "taas-agent" }}
+{{- $configMapName := "neutron-etc" }}
+{{- $serviceAccountName := "neutron-taas-agent" }}
+{{- $dependencyOpts := dict "envAll" $envAll "dependencyMixinParam" $envAll.Values.network.backend "dependencyKey" "taas_agent" -}}
+{{- $dependencies := include "helm-toolkit.utils.dependency_resolver" $dependencyOpts | toString | fromYaml }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+{{- $daemonset_yaml := list $daemonset $configMapName $serviceAccountName $dependencies . | include "neutron.taas_agent.daemonset" | toString | fromYaml }}
+{{- $configmap_yaml := "neutron.configmap.etc" }}
+{{- list $daemonset $daemonset_yaml $configmap_yaml $configMapName . | include "helm-toolkit.utils.daemonset_overrides" }}
+{{- end }}
