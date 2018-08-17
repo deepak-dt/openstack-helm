@@ -1,0 +1,108 @@
+heat_template_version: 2016-10-14
+
+parameters:
+  network_name:
+    type: string
+    default: public
+
+  physical_network_name:
+    type: string
+    default: public
+
+  subnet_name:
+    type: string
+    default: public
+
+  subnet_cidr:
+    type: string
+    default: 172.24.4.0/24
+
+  subnet_gateway:
+    type: string
+    default: 172.24.4.1
+
+  private_net:
+    type: string
+    default: private_net
+
+  private_subnet:
+    type: string
+    default: private_subnet
+
+  port_security_group:
+    type: string
+    default: port_security_group
+
+resources:
+  public_net:
+    type: OS::Neutron::ProviderNet
+    properties:
+      name:
+        get_param: network_name
+      router_external: true
+      physical_network:
+        get_param: physical_network_name
+      network_type: flat
+
+  public_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name:
+        get_param: subnet_name
+      network:
+        get_resource: public_net
+      cidr:
+        get_param: subnet_cidr
+      gateway_ip:
+        get_param: subnet_gateway
+      enable_dhcp: false
+      dns_nameservers:
+        - 10.96.0.10
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network:
+          get_param: public_net
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id:
+        get_resource: router
+      subnet_id:
+        get_resource: private_subnet
+
+  private_net:
+    type: OS::Neutron::Net
+    properties:
+      name: 
+        get_param: private_net
+
+  private_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name:
+        get_param: private_subnet
+      network:
+        get_resource: private_net
+      cidr:
+        get_param: cidr
+      dns_nameservers:
+        get_param: dns_nameserver
+
+  port_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: 
+        get_param: port_security_group
+      description: 'Default security group assigned to port.'
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+

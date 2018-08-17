@@ -1,0 +1,138 @@
+heat_template_version: '2016-10-14'
+
+parameters:
+  public_net:
+    type: string
+    default: public
+
+  image:
+    type: string
+    default: Cirros 0.3.5 64-bit
+
+  ssh_key:
+    type: string
+    default: heat-vm-key
+
+  cidr:
+    type: string
+    default: 10.11.11.0/24
+
+  dns_nameserver:
+    type: comma_delimited_list
+    description: address of a dns nameserver reachable in your environment
+    default: 8.8.8.8
+
+  flavor:
+    type: string
+    default: m1.tiny
+
+  private_net:
+    type: string
+    default: private_net
+
+  private_subnet:
+    type: string
+    default: private_subnet
+
+  port_security_group:
+    type: string
+    default: port_security_group
+
+  vf_vlan_filter:
+    type: string
+    default: '0'
+
+  vf_vlan_mirror:
+    type: string
+    default: '0,1,10-20,25,30-45'
+
+  vf_public_vlans:
+    type: string
+    default: '0,1,10-20,25,30-45'
+
+  vf_private_vlans:
+    type: string
+    default: '0,1,10-20,25,30-45'
+
+  vf_guest_vlans:
+    type: string
+    default: '0,1,10-20,25,30-45'
+
+  vf_pci_slot:
+    type: string
+    default: '0000:04:00.0'
+
+  pf_pci_slot:
+    type: string
+    default: '0000:04:00.1'
+
+  pf_pci_vendor_info:
+    type: string
+    default: '7daf:67bc'
+
+  pf_physical_network:
+    type: string
+    default: 'sriovnet1'
+
+resources:
+  #flavor:
+  #  type: OS::Nova::Flavor
+  #  properties:
+  #    disk: 1
+  #    ram: 64
+  #    vcpus: 1
+
+  server:
+    type: OS::Nova::Server
+    properties:
+      image:
+        get_param: image
+      flavor:
+        get_param: flavor
+      key_name:
+        get_param: ssh_key
+      networks:
+        - port:
+            get_resource: server_port
+      user_data_format: RAW
+
+  server_port:
+    type: OS::Neutron::Port
+    properties:
+      network:
+        get_param: private_net
+      fixed_ips:
+        - subnet:
+            get_param: private_subnet
+      security_groups:
+        - get_param: port_security_group
+      vf_vlan_filter: {get_param: vf_vlan_filter}
+      vf_vlan_mirror: {get_param: vf_vlan_mirror}
+      vf_public_vlans: {get_param: vf_public_vlans}
+      vf_private_vlans: {get_param: vf_private_vlans}
+      vf_guest_vlans: {get_param: vf_guest_vlans}
+      vf_pci_slot: {get_param: vf_pci_slot}
+      pf_pci_slot: {get_param: pf_pci_slot}
+      pf_pci_vendor_info: {get_param: pf_pci_vendor_info}
+      pf_physical_network: {get_param: pf_physical_network}
+
+  server_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network:
+        get_param: public_net
+      port_id:
+        get_resource: server_port
+
+outputs:
+  floating_ip:
+    value:
+      get_attr:
+        - server_floating_ip
+        - floating_ip_address
+  instance_uuid:
+    value:
+      get_attr:
+        - server
+        - show
+        - id
