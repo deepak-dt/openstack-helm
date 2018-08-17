@@ -19,6 +19,10 @@ limitations under the License.
 {{- $envAll := index . 1 }}
 {{- with $envAll }}
 
+{{- with $env := dict "ksUserSecret" $envAll.Values.secrets.identity.admin }}
+{{- include "helm-toolkit.snippets.keystone_openrc_env_vars" $env | indent 12 }}
+{{- end }}
+
 {{- if empty $envAll.Values.conf.neutron.keystone_authtoken.auth_uri -}}
 {{- $_ := tuple "identity" "internal" "api" . | include "helm-toolkit.endpoints.keystone_endpoint_uri_lookup"| set $envAll.Values.conf.neutron.keystone_authtoken "auth_uri" -}}
 {{- end }}
@@ -40,6 +44,20 @@ limitations under the License.
 {{- $_ := set $envAll.Values.conf.neutron.keystone_authtoken "username" $envAll.Values.endpoints.identity.auth.neutron.username -}}
 {{- end -}}
 {{- if empty $envAll.Values.conf.neutron.keystone_authtoken.password -}}
+            - name: SERVICE_OS_SERVICE_NAME
+              value: "magnum"
+            - name: SERVICE_OS_REGION_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.identity.magnum_stack_user }}
+                  key: OS_REGION_NAME
+            - name: SERVICE_OS_DOMAIN_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.identity.magnum_stack_user }}
+                  key: OS_DOMAIN_NAME
+
+{{- $_ := set $envAll.Values.conf.neutron.keystone_authtoken "password" { secretKeyRef: name: {{ .Values.secrets.identity.neutron-keystone-user }}, key: OS_PASSWORD } -}}
 {{- $_ := set $envAll.Values.conf.neutron.keystone_authtoken "password" $envAll.Values.endpoints.identity.auth.neutron.password -}}
 {{- end -}}
 {{- if empty $envAll.Values.conf.neutron.keystone_authtoken.region_name -}}

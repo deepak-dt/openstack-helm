@@ -1599,7 +1599,7 @@ conf:
       # we cannot change the proxy socket path as it is declared
       # as a hostPath volume from agent daemonsets
       metadata_proxy_socket: /var/lib/neutron/openstack-helm/metadata_proxy
-      metadata_proxy_shared_secret: "password"
+      #metadata_proxy_shared_secret: "password"
     cache:
       enabled: true
       backend: dogpile.cache.memcached
@@ -1625,6 +1625,10 @@ secrets:
     admin: neutron-keystone-admin
     neutron: neutron-keystone-user
     test: neutron-keystone-test
+    nova: nova-keystone-user
+  metadata_proxy:
+    admin: neutron-metadata-proxy-secret-admin
+    user: neutron-metadata-proxy-secret-user
   oslo_db:
     admin: neutron-db-admin
     neutron: neutron-db-user
@@ -1654,13 +1658,13 @@ endpoints:
       registry:
         node: 5000
   oslo_db:
-    auth:
-      admin:
-        username: root
-        password: password
-      neutron:
-        username: neutron
-        password: password
+    #auth:
+    #  admin:
+    #    username: root
+    #    password: password
+    #  neutron:
+    #    username: neutron
+    #    password: password
     hosts:
       default: mariadb
     host_fqdn_override:
@@ -1671,13 +1675,13 @@ endpoints:
       mysql:
         default: 3306
   oslo_messaging:
-    auth:
-      admin:
-        username: rabbitmq
-        password: password
-      neutron:
-        username: neutron
-        password: password
+    #auth:
+    #  admin:
+    #    username: rabbitmq
+    #    password: password
+    #  neutron:
+    #    username: neutron
+    #    password: password
     hosts:
       default: rabbitmq
     host_fqdn_override:
@@ -1738,37 +1742,37 @@ endpoints:
         public: 80
   identity:
     name: keystone
-    auth:
-      admin:
-        region_name: RegionOne
-        username: admin
-        password: password
-        project_name: admin
-        user_domain_name: default
-        project_domain_name: default
-      neutron:
-        role: admin
-        region_name: RegionOne
-        username: neutron
-        password: password
-        project_name: service
-        user_domain_name: service
-        project_domain_name: service
-      nova:
-        region_name: RegionOne
-        project_name: service
-        username: nova
-        password: password
-        user_domain_name: service
-        project_domain_name: service
-      test:
-        role: admin
-        region_name: RegionOne
-        username: test
-        password: password
-        project_name: test
-        user_domain_name: service
-        project_domain_name: service
+    #auth:
+      #admin:
+      #  region_name: RegionOne
+      #  username: admin
+      #  password: password
+      #  project_name: admin
+      #  user_domain_name: default
+      #  project_domain_name: default
+      #neutron:
+      #  role: admin
+      #  region_name: RegionOne
+      #  username: neutron
+      #  password: password
+      #  project_name: service
+      #  user_domain_name: service
+      #  project_domain_name: service
+      #nova:
+      #  region_name: RegionOne
+      #  project_name: service
+      #  username: nova
+      #  password: password
+      #  user_domain_name: service
+      #  project_domain_name: service
+      #test:
+      #  role: admin
+      #  region_name: RegionOne
+      #  username: test
+      #  password: password
+      #  project_name: test
+      #  user_domain_name: service
+      #  project_domain_name: service
     hosts:
       default: keystone-api
       public: keystone
