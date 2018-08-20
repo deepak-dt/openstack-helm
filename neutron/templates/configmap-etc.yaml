@@ -193,10 +193,14 @@ data:
 {{ include "helm-toolkit.utils.to_oslo_conf" $envAll.Values.conf.metadata_agent | indent 4 }}
   metering_agent.ini: |
 {{ include "helm-toolkit.utils.to_oslo_conf" $envAll.Values.conf.metering_agent | indent 4 }}
+  taas_plugin.ini: |
+{{ include "helm-toolkit.utils.to_oslo_conf" $envAll.Values.conf.taas_plugin | indent 4 }}
   ml2_conf.ini: |
 {{ include "helm-toolkit.utils.to_oslo_conf" $envAll.Values.conf.plugins.ml2_conf | indent 4 }}
   ml2_conf_sriov.ini: |
 {{ include "helm-toolkit.utils.to_oslo_conf" $envAll.Values.conf.plugins.ml2_conf_sriov | indent 4 }}
+  taas.ini: |
+{{ include "helm-toolkit.utils.to_oslo_conf" $envAll.Values.conf.plugins.taas| indent 4 }}
   macvtap_agent.ini: |
 {{ include "helm-toolkit.utils.to_oslo_conf" $envAll.Values.conf.plugins.macvtap_agent | indent 4 }}
   linuxbridge_agent.ini: |

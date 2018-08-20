@@ -21,12 +21,18 @@ images:
     glance_bootstrap: 'docker.io/openstackhelm/heat:ocata'
     glance_db_sync: 'docker.io/openstackhelm/glance:ocata'
     glance_registry: 'docker.io/openstackhelm/glance:ocata'
-    heat_api: 'docker.io/openstackhelm/heat:ocata'
-    heat_cfn: 'docker.io/openstackhelm/heat:ocata'
-    heat_cloudwatch: 'docker.io/openstackhelm/heat:ocata'
-    heat_db_sync: 'docker.io/openstackhelm/heat:ocata'
-    heat_engine: 'docker.io/openstackhelm/heat:ocata'
-    heat_engine_cleaner: 'docker.io/openstackhelm/heat:ocata'
+    #heat_api: 'docker.io/openstackhelm/heat:ocata'
+    #heat_cfn: 'docker.io/openstackhelm/heat:ocata'
+    #heat_cloudwatch: 'docker.io/openstackhelm/heat:ocata'
+    #heat_db_sync: 'docker.io/openstackhelm/heat:ocata'
+    #heat_engine: 'docker.io/openstackhelm/heat:ocata'
+    #heat_engine_cleaner: 'docker.io/openstackhelm/heat:ocata'
+    heat_api: 'docker.io/deepakdt/heat:ocata-taas-osc-1804'
+    heat_cfn: 'docker.io/deepakdt/heat:ocata-taas-osc-1804'
+    heat_cloudwatch: 'docker.io/deepakdt/heat:ocata-taas-osc-1804'
+    heat_db_sync: 'docker.io/deepakdt/heat:ocata-taas-osc-1804'
+    heat_engine: 'docker.io/deepakdt/heat:ocata-taas-osc-1804'
+    heat_engine_cleaner: 'docker.io/deepakdt/heat:ocata-taas-osc-1804'
     horizon: 'docker.io/openstackhelm/horizon:ocata'
     horizon_db_sync: 'docker.io/openstackhelm/horizon:ocata'
     ironic_api: 'docker.io/openstackhelm/ironic:ocata'
@@ -49,15 +55,24 @@ images:
     magnum_api: 'docker.io/openstackhelm/magnum:ocata'
     magnum_conductor: 'docker.io/openstackhelm/magnum:ocata'
     magnum_db_sync: 'docker.io/openstackhelm/magnum:ocata'
-    neutron_db_sync: 'docker.io/openstackhelm/neutron:ocata'
-    neutron_dhcp: 'docker.io/openstackhelm/neutron:ocata'
-    neutron_l3: 'docker.io/openstackhelm/neutron:ocata'
-    neutron_linuxbridge_agent: 'docker.io/openstackhelm/neutron:ocata'
-    neutron_metadata: 'docker.io/openstackhelm/neutron:ocata'
-    neutron_openvswitch_agent: 'docker.io/openstackhelm/neutron:ocata'
-    neutron_server: 'docker.io/openstackhelm/neutron:ocata'
-    neutron_sriov_agent: 'docker.io/openstackhelm/neutron:ocata-sriov-1804'
-    neutron_sriov_agent_init: 'docker.io/openstackhelm/neutron:ocata-sriov-1804'
+    #neutron_db_sync: 'docker.io/openstackhelm/neutron:ocata'
+    #neutron_dhcp: 'docker.io/openstackhelm/neutron:ocata'
+    #neutron_l3: 'docker.io/openstackhelm/neutron:ocata'
+    #neutron_linuxbridge_agent: 'docker.io/openstackhelm/neutron:ocata'
+    #neutron_metadata: 'docker.io/openstackhelm/neutron:ocata'
+    #neutron_openvswitch_agent: 'docker.io/openstackhelm/neutron:ocata'
+    #neutron_server: 'docker.io/openstackhelm/neutron:ocata'
+    #neutron_sriov_agent: 'docker.io/openstackhelm/neutron:ocata-sriov-1804'
+    #neutron_sriov_agent_init: 'docker.io/openstackhelm/neutron:ocata-sriov-1804'
+    neutron_db_sync: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_dhcp: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_l3: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_linuxbridge_agent: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_metadata: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_openvswitch_agent: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_server: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_sriov_agent: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
+    neutron_sriov_agent_init: 'docker.io/deepakdt/neutron:ocata-master-with-neutron-ocata-1804'
     nova_api: 'docker.io/openstackhelm/nova:ocata'
     nova_cell_setup: 'docker.io/openstackhelm/nova:ocata'
     nova_cell_setup_init: 'docker.io/openstackhelm/heat:ocata'
@@ -80,3 +95,17 @@ images:
     senlin_engine_cleaner: 'docker.io/openstackhelm/senlin:ocata'
     tempest: 'docker.io/kolla/ubuntu-source-tempest:4.0.3'
     test: 'docker.io/kolla/ubuntu-source-rally:4.0.0'
+conf:
+  neutron:
+    DEFAULT:
+      service_plugins: router,taas
+  plugins:
+    ml2_conf:
+      agent:
+        extensions: taas
+    taas:
+      taas:
+        enabled: True
+  taas_plugin:
+    service_providers:
+      service_provider: TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default
