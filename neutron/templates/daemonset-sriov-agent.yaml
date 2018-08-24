@@ -83,6 +83,12 @@ spec:
               mountPath: /etc/neutron/plugins/ml2/sriov_agent.ini
               subPath: sriov_agent.ini
               readOnly: true
+            {{- if .Values.conf.plugins.taas.taas.enabled }}
+            - name: neutron-etc
+              mountPath: /etc/neutron/plugins/ml2/taas.ini
+              subPath: taas.ini
+              readOnly: true
+            {{- end }}
             - name: neutron-etc
               # NOTE (Portdirect): We mount here to override Kollas
               # custom sudoers file when using Kolla images, this
@@ -139,6 +145,12 @@ spec:
               mountPath: /etc/neutron/plugins/ml2/sriov_agent.ini
               subPath: sriov_agent.ini
               readOnly: true
+            {{- if .Values.conf.plugins.taas.taas.enabled }}
+            - name: neutron-etc
+              mountPath: /etc/neutron/plugins/ml2/taas.ini
+              subPath: taas.ini
+              readOnly: true
+            {{- end }}
             - name: neutron-etc
               # NOTE (Portdirect): We mount here to override Kollas
               # custom sudoers file when using Kolla images, this

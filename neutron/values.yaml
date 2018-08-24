@@ -1550,7 +1550,12 @@ conf:
       # using ml2_type_vlan.network_vlan_ranges:
       # ml2_type_vlan:
       #   network_vlan_ranges: "external:1100:1110"
+      agent:
+        extensions: ""
     ml2_conf_sriov: null
+    taas:
+      taas:
+        enabled: False
     openvswitch_agent:
       agent:
         tunnel_types: vxlan

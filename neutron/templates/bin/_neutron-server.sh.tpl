@@ -23,6 +23,9 @@ function start () {
   exec neutron-server \
         --config-file /etc/neutron/neutron.conf \
         --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+{{- if .Values.conf.plugins.taas.taas.enabled }} \
+        --config-file /etc/neutron/taas_plugin.ini
+{{- end }}
 {{- if ( has "sriov" .Values.network.backend ) }} \
         --config-file /etc/neutron/plugins/ml2/sriov_agent.ini
 {{- end }}
@@ -31,5 +34,9 @@ function start () {
 function stop () {
   kill -TERM 1
 }
+
+{{- if .Values.conf.plugins.taas.taas.enabled }}
+neutron-db-manage --subproject tap-as-a-service upgrade head
+{{- end }}
 
 $COMMAND
