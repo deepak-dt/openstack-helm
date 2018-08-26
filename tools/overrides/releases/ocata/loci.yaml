@@ -95,3 +95,35 @@ images:
     senlin_engine_cleaner: 'docker.io/openstackhelm/senlin:ocata'
     tempest: 'docker.io/kolla/ubuntu-source-tempest:4.0.3'
     test: 'docker.io/kolla/ubuntu-source-rally:4.0.0'
+conf:
+  neutron:
+    DEFAULT:
+      debug: True
+      l3_ha: False
+      min_l3_agents_per_router: 1
+      max_l3_agents_per_router: 1
+      l3_ha_network_type: vxlan
+      dhcp_agents_per_network: 1
+      service_plugins: router
+      #service_plugins: router,taas
+  plugins:
+    ml2_conf:
+      ml2_type_flat:
+        flat_networks: public
+    #NOTE(portdirect): for clarity we include options for all the neutron
+    # backends here.
+    openvswitch_agent:
+      agent:
+        tunnel_types: vxlan
+        extensions: taas
+      ovs:
+        bridge_mappings: public:br-ex
+    linuxbridge_agent:
+      linux_bridge:
+        bridge_mappings: public:br-ex
+    taas:
+      taas:
+        enabled: False
+  taas_plugin:
+    service_providers:
+      service_provider: TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default
