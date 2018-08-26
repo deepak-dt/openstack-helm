@@ -51,8 +51,7 @@ conf:
       max_l3_agents_per_router: 1
       l3_ha_network_type: vxlan
       dhcp_agents_per_network: 1
-      #service_plugins: router
-      service_plugins: router,taas
+      service_plugins: router
   plugins:
     ml2_conf:
       ml2_type_flat:
@@ -62,19 +61,11 @@ conf:
     openvswitch_agent:
       agent:
         tunnel_types: vxlan
-        extensions: taas
       ovs:
         bridge_mappings: public:br-ex
     linuxbridge_agent:
       linux_bridge:
         bridge_mappings: public:br-ex
-    taas:
-      taas:
-        enabled: False
-        #enabled: True
-  taas_plugin:
-    service_providers:
-      service_provider: TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default
 EOF
 helm upgrade --install neutron ./neutron \
     --namespace=openstack \
