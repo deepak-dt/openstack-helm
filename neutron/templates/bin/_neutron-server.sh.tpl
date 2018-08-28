@@ -35,8 +35,4 @@ function stop () {
   kill -TERM 1
 }
 
-{{- if .Values.conf.plugins.taas.taas.enabled }}
-neutron-db-manage --subproject tap-as-a-service upgrade head
-{{- end }}
-
 $COMMAND
