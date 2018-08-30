@@ -127,3 +127,14 @@ conf:
   taas_plugin:
     service_providers:
       service_provider: TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default
+  logging:
+        logger_neutron_taas:
+          level: INFO
+          handlers:
+            - stdout
+          qualname: neutron_taas
+        loggers:
+          keys:
+          - root
+          - neutron
+          - neutron_taas
