@@ -26,8 +26,8 @@ spec:
     - name: shaker-api
       protocol: TCP
       port: {{ tuple "shaker" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
-    {{ if .Values.shaker.shaker.node_port.enabled }}
-      nodePort: {{ .Values.network.shaker.node_port.port }}
+    {{ if .Values.shaker.controller.node_port.enabled }}
+      nodePort: {{ .Values.shaker.controller.node_port.port }}
     {{ end }}
       targetPort: {{ tuple "shaker" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
   selector:
