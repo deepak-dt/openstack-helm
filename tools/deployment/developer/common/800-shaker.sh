@@ -22,6 +22,9 @@ make pull-images shaker
 #NOTE: Deploy command
 export OS_CLOUD=openstack_helm
 
+export stack_exists=`openstack stack list | grep heat-public-net-deployment | awk '{print $4}'`
+
+if [ -z stack_exists ]; then
 export OSH_EXT_NET_NAME="public"
 export OSH_EXT_SUBNET_NAME="public-subnet"
 export OSH_EXT_SUBNET="172.24.4.0/24"
@@ -34,7 +37,11 @@ openstack stack create --wait \
   --parameter subnet_gateway=${OSH_BR_EX_ADDR%/*} \
   -t ./tools/gate/files/heat-public-net-deployment.yaml \
   heat-public-net-deployment
+fi
 
+export stack_exists=`openstack stack list | grep heat-subnet-pool-deployment | awk '{print $4}'`
+
+if [ -z stack_exists ]; then
 export OSH_PRIVATE_SUBNET_POOL="11.0.0.0/8"
 export OSH_PRIVATE_SUBNET_POOL_NAME="shared-default-subnetpool"
 export OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX="24"
@@ -44,6 +51,7 @@ openstack stack create --wait \
   --parameter subnet_pool_default_prefix_length=${OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX} \
   -t ./tools/gate/files/heat-subnet-pool-deployment.yaml \
   heat-subnet-pool-deployment
+fi
 
 IMAGE_NAME=$(openstack image show -f value -c name \
   $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
