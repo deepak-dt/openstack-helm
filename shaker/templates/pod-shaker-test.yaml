@@ -33,7 +33,7 @@ metadata:
     "helm.sh/hook": test-success
 spec:
   nodeSelector:
-    {{ .Values.labels.test.node_selector_key }}: {{ .Values.labels.test.node_selector_value }}
+    {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}
   restartPolicy: Never
   serviceAccountName: {{ $serviceAccountName }}
   initContainers:
