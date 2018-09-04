@@ -233,4 +233,5 @@ manifests:
   job_image_repo_sync: true
   job_ks_user: true
   pod_shaker_test: true
+  service_shaker: true
   secret_keystone: true

@@ -99,6 +99,8 @@ spec:
           readOnly: true
         - name: shaker-db
           mountPath: /var/lib/shaker
+        - name: shaker-reports
+          mountPath: /var/lib/shaker/data
 {{ if $mounts_tests.volumeMounts }}{{ toYaml $mounts_tests.volumeMounts | indent 8 }}{{ end }}
   volumes:
     - name: shaker-etc
@@ -111,5 +113,12 @@ spec:
         defaultMode: 0555
     - name: shaker-db
       emptyDir: {}
+    - name: shaker-reports
+    {{- if not .Values.pvc.enabled }}
+      emptyDir: {}
+    {{- else }}
+      persistentVolumeClaim:
+        claimName: {{ .Values.pvc.name }}
+    {{- end }}
 {{ if $mounts_tests.volumes }}{{ toYaml $mounts_tests.volumes | indent 4 }}{{ end }}
 {{- end }}
