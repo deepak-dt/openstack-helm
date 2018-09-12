@@ -40,7 +40,7 @@ spec:
       initContainers:
 {{ tuple $envAll "run_tests" $mounts_tests_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
         - name: {{ .Release.Name }}-test-ks-user
-{{ tuple $envAll "ks_user" | include "helm-toolkit.snippets.image" | indent 6 }}
+{{ tuple $envAll "ks_user" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.ks_user | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           command:
             - /tmp/ks-user.sh
