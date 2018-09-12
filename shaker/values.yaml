@@ -110,6 +110,7 @@ dependencies:
 conf:
   script: |
     echo "Shaker Tests - Hello World!" > /tmp/shaker_tests.out
+    shaker --help >> /tmp/shaker_tests.out
   # The following sections can be used to group shaker tests.
   # If either section is not empty, it will be used to create an entry in the
   # shaker-etc configmap and will be mounted into the shaker-run-tests pod
@@ -134,8 +135,8 @@ conf:
       debug: true
       cleanup_on_error: false
       server_endpoint: 172.20.9.7:31999
-      report: $WORKSPACE/work/pycharm-shaker/result.html
-      output: $WORKSPACE/work/pycharm-shaker/result.json
+      report: result.html
+      output: result.json
       scenario: openstack/perf_l2
       flavor_name: m1.small
       external_net: public
