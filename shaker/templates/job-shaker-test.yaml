@@ -88,15 +88,15 @@ spec:
             - name: SHAKER_SERVER_ENDPOINT
               value: {{ .Values.conf.shaker.DEFAULT.server_endpoint }}
           command:
-            - /tmp/shaker-test.sh
+            - /tmp/run-tests.sh
           volumeMounts:
             - name: shaker-etc
               mountPath: /etc/shaker/shaker_tests.yaml
               subPath: shaker_tests.yaml
               readOnly: true
             - name: shaker-bin
-              mountPath: /tmp/shaker-test.sh
-              subPath: shaker-test.sh
+              mountPath: /tmp/run-tests.sh
+              subPath: run-tests.sh
               readOnly: true
             - name: shaker-db
               mountPath: /var/lib/shaker
