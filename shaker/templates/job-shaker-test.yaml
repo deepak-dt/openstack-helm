@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */}}
 
-{{- if .Values.manifests.pod_shaker_test }}
+{{- if .Values.manifests.job_shaker_test }}
 {{- $envAll := . }}
 
 {{- $mounts_tests := .Values.pod.mounts.shaker_tests.shaker_tests }}
