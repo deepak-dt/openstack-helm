@@ -29,8 +29,6 @@ metadata:
   name: {{ print $envAll.Release.Name "-test" }}
   labels:
 {{ tuple $envAll "shaker" "test" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
-  annotations:
-    "helm.sh/hook": test-success
 spec:
   nodeSelector:
     {{ .Values.labels.job.node_selector_key }}: {{ .Values.labels.job.node_selector_value }}

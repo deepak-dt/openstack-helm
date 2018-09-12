@@ -41,15 +41,15 @@ pod:
       uid: 1000
   resources:
     enabled: false
-    shaker_tests:
-      requests:
-        memory: "128Mi"
-        cpu: "100m"
-      limits:
-        memory: "1024Mi"
-        cpu: "2000m"
     jobs:
       ks_user:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      run_tests:
         requests:
           memory: "128Mi"
           cpu: "100m"
@@ -110,6 +110,15 @@ dependencies:
 conf:
   script: |
     echo "Shaker Tests - Hello World!" > /tmp/shaker_tests.out
+  # The following sections can be used to group shaker tests.
+  # If either section is not empty, it will be used to create an entry in the
+  # shaker-etc configmap and will be mounted into the shaker-run-tests pod
+  # basic:
+  #   - (?:shaker_tests\.sample\.sctp)
+  #   - (?:shaker_tests\.sample\.tcp)
+  # sriov:
+  #   - (?:shaker_tests\.sriov\.sriov_non_dpdk)
+  #   - (?:shaker_tests\.sriov\.sriov_dpdk)
   shaker:
     auth:
       use_dynamic_credentials: true
@@ -232,6 +241,6 @@ manifests:
   configmap_etc: true
   job_image_repo_sync: true
   job_ks_user: true
-  pod_shaker_test: true
+  job_shaker_test: true
   service_shaker: true
   secret_keystone: true

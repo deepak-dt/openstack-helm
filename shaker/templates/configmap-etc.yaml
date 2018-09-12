@@ -49,10 +49,10 @@ metadata:
 type: Opaque
 data:
   shaker.conf: {{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.shaker | b64enc }}
-{{ if not (empty .Values.conf.blacklist) }}
-  test-blacklist: {{ include "shaker.utils.to_regex_file" .Values.conf.blacklist | b64enc }}
+{{ if not (empty .Values.conf.basic) }}
+  test-basic: {{ include "shaker.utils.to_regex_file" .Values.conf.basic | b64enc }}
 {{ end }}
-{{ if not (empty .Values.conf.whitelist) }}
-  test-whitelist: {{ include "shaker.utils.to_regex_file" .Values.conf.whitelist | b64enc }}
+{{ if not (empty .Values.conf.sriov) }}
+  test-sriov: {{ include "shaker.utils.to_regex_file" .Values.conf.sriov | b64enc }}
 {{ end }}
 {{- end }}
