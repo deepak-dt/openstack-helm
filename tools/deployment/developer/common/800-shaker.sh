@@ -90,7 +90,7 @@ conf:
         debug: true
         cleanup_on_error: false
         compute_nodes: 1
-        server_endpoint: ${SERVER_ENDPOINT}
+        #server_endpoint: ${SERVER_ENDPOINT}
         report: ${REPORT_FILE}
         output: ${OUTPUT_FILE}
         scenario: ${SCENARIO}
