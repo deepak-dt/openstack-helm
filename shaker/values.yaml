@@ -109,8 +109,13 @@ dependencies:
 
 conf:
   script: |
-    echo "Shaker Tests - Hello World!" > /tmp/shaker_tests.out
-    shaker --help >> /tmp/shaker_tests.out
+    echo "Shaker Tests - Hello World!"
+    shaker --help
+    while true; do
+       echo `date`
+       sleep 5
+    done
+
   # The following sections can be used to group shaker tests.
   # If either section is not empty, it will be used to create an entry in the
   # shaker-etc configmap and will be mounted into the shaker-run-tests pod
@@ -131,23 +136,24 @@ conf:
     identity-feature-enabled:
       api_v2: false
       api_v3: true
-    DEFAULT:
-      debug: true
-      cleanup_on_error: false
-      server_endpoint: 172.20.9.7:31999
-      report: result.html
-      output: result.json
-      scenario: openstack/perf_l2
-      flavor_name: m1.small
-      external_net: public
-      image_name: shaker-image
-      availability_zone: nova
-      compute_nodes: 1
-      os_username: $OS_USERNAME
-      os_password: $OS_PASSWORD
-      os_auth_url: $OS_AUTH_URL
-      os_project_name: $OS_PROJECT_NAME
-      os_region_name: $OS_REGION_NAME
+    shaker:
+      DEFAULT:
+        debug: true
+        cleanup_on_error: false
+        server_endpoint: 172.20.9.7:31999
+        report: result.html
+        output: result.json
+        scenario: openstack/perf_l2
+        flavor_name: m1.small
+        external_net: public
+        image_name: shaker-image
+        availability_zone: nova
+        compute_nodes: 1
+        os_username: $OS_USERNAME
+        os_password: $OS_PASSWORD
+        os_auth_url: $OS_AUTH_URL
+        os_project_name: $OS_PROJECT_NAME
+        os_region_name: $OS_REGION_NAME
     validation:
       connect_method: floating
     volume:

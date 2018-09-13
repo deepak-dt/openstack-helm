@@ -48,7 +48,7 @@ metadata:
   name: shaker-etc
 type: Opaque
 data:
-  shaker.conf: {{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.shaker | b64enc }}
+  shaker.conf: {{ include "helm-toolkit.utils.to_oslo_conf" .Values.conf.shaker.shaker | b64enc }}
 {{ if not (empty .Values.conf.basic) }}
   test-basic: {{ include "shaker.utils.to_regex_file" .Values.conf.basic | b64enc }}
 {{ end }}
