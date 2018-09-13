@@ -78,7 +78,7 @@ conf:
   script: |
     echo "Shaker Tests - Hello World!"
     shaker --help
-    server_endpoint=`ip a | grep "global eth0" | cut -f6 -d' ' | cut -f1 -d'/'`
+    export server_endpoint=\`ip a | grep "global eth0" | cut -f6 -d' ' | cut -f1 -d'/'\`
     shaker --server-endpoint \$server_endpoint:31999 --config-file /opt/shaker/shaker.conf
     while true; do
        echo `date`
