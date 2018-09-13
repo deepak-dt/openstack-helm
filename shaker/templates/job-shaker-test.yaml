@@ -65,10 +65,10 @@ spec:
 {{ tuple $envAll "shaker_run_tests" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.run_tests | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
           args:
-{{- if .Values.conf.shaker.DEFAULT.debug }}
+{{- if .Values.conf.shaker.shaker.DEFAULT.debug }}
           - --debug
 {{- end }}
-{{- if not .Values.conf.shaker.DEFAULT.cleanup_on_error }}
+{{- if not .Values.conf.shaker.shaker.DEFAULT.cleanup_on_error }}
           - --nocleanup
 {{- end }}
           securityContext:
@@ -84,9 +84,9 @@ spec:
             - name: SHAKER_ENV_NAME
               value: {{.Release.Name}}
             - name: SHAKER_SCENARIO
-              value: {{ .Values.conf.shaker.DEFAULT.scenario }}
+              value: {{ .Values.conf.shaker.shaker.DEFAULT.scenario }}
             - name: SHAKER_SERVER_ENDPOINT
-              value: {{ .Values.conf.shaker.DEFAULT.server_endpoint }}
+              value: {{ .Values.conf.shaker.shaker.DEFAULT.server_endpoint }}
           command:
             - /tmp/run-tests.sh
           volumeMounts:
