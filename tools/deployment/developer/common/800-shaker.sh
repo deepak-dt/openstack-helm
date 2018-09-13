@@ -24,7 +24,7 @@ export OS_CLOUD=openstack_helm
 
 export stack_exists=`openstack stack list | grep heat-public-net-deployment | awk '{print $4}'`
 
-if [ -z stack_exists ]; then
+if [ -z $stack_exists ]; then
 export OSH_EXT_NET_NAME="public"
 export OSH_EXT_SUBNET_NAME="public-subnet"
 export OSH_EXT_SUBNET="172.24.4.0/24"
@@ -41,7 +41,7 @@ fi
 
 export stack_exists=`openstack stack list | grep heat-subnet-pool-deployment | awk '{print $4}'`
 
-if [ -z stack_exists ]; then
+if [ -z $stack_exists ]; then
 export OSH_PRIVATE_SUBNET_POOL="11.0.0.0/8"
 export OSH_PRIVATE_SUBNET_POOL_NAME="shared-default-subnetpool"
 export OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX="24"
@@ -75,24 +75,34 @@ OUTPUT_FILE="/tmp/shaker-result.json"
 #NOTE: Deploy shaker pods
 tee /tmp/shaker.yaml << EOF
 conf:
+  script: |
+    echo "Shaker Tests - Hello World!"
+    shaker --help
+    server_endpoint=`ip a | grep "global eth0" | cut -f6 -d' ' | cut -f1 -d'/'`
+    shaker --server-endpoint $server_endpoint:31999 --config-file /opt/shaker/shaker.conf
+    while true; do
+       echo `date`
+       sleep 5
+    done
   shaker:
-    DEFAULT:
-      debug: true
-      cleanup_on_error: false
-      compute_nodes: 1
-      server_endpoint: ${SERVER_ENDPOINT}
-      report: ${REPORT_FILE}
-      output: ${OUTPUT_FILE}
-      scenario: ${SCENARIO}
-      flavor_name: ${FLAVOR_ID}
-      external_net: ${EXTERNAL_NETWORK_NAME}
-      image_name: ${IMAGE_ID}
-      availability_zone: ${AVAILABILITY_ZONE}
-      os_username: ${OS_USERNAME}
-      os_password: ${OS_PASSWORD}
-      os_auth_url: ${OS_AUTH_URL}
-      os_project_name: ${OS_PROJECT_NAME}
-      os_region_name: ${OS_REGION_NAME}
+    shaker:
+      DEFAULT:
+        debug: true
+        cleanup_on_error: false
+        compute_nodes: 1
+        server_endpoint: ${SERVER_ENDPOINT}
+        report: ${REPORT_FILE}
+        output: ${OUTPUT_FILE}
+        scenario: ${SCENARIO}
+        flavor_name: ${FLAVOR_ID}
+        external_net: ${EXTERNAL_NETWORK_NAME}
+        image_name: ${IMAGE_ID}
+        availability_zone: ${AVAILABILITY_ZONE}
+        os_username: ${OS_USERNAME}
+        os_password: ${OS_PASSWORD}
+        os_auth_url: ${OS_AUTH_URL}
+        os_project_name: ${OS_PROJECT_NAME}
+        os_region_name: ${OS_REGION_NAME}
 EOF
 
 envsubst < /tmp/shaker.yaml
