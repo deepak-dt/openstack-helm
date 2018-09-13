@@ -66,7 +66,7 @@ OS_AUTH_URL="http://keystone.openstack.svc.cluster.local/v3"
 OS_PROJECT_NAME="admin"
 OS_REGION_NAME="RegionOne"
 EXTERNAL_NETWORK_NAME="public"
-SCENARIO="openstack/full_l2"
+SCENARIO="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"
 SERVER_ENDPOINT=172.17.0.1:31999
 AVAILABILITY_ZONE="nova"
 REPORT_FILE="/tmp/shaker-result.html"
@@ -76,8 +76,8 @@ OUTPUT_FILE="/tmp/shaker-result.json"
 tee /tmp/shaker.yaml << EOF
 conf:
   script: |
-    sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, , compute_nodes: 1\]/" /opt/shaker/shaker/scenarios/${SCENARIO}.yaml
-    cat /opt/shaker/shaker/scenarios/${SCENARIO}.yaml
+    sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
+    cat ${SCENARIO}
     export server_endpoint=\`ip a | grep "global eth0" | cut -f6 -d' ' | cut -f1 -d'/'\`
     shaker --server-endpoint \$server_endpoint:31999 --config-file /opt/shaker/shaker.conf
     while true; do

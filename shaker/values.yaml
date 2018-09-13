@@ -143,7 +143,7 @@ conf:
         #server_endpoint: 172.20.9.7:31999
         report: /opt/shaker/result.html
         output: /opt/shaker/result.json
-        scenario: openstack/full_l2
+        scenario: /opt/shaker/shaker/scenarios/openstack/full_l2.yaml
         flavor_name: m1.small
         external_net: public
         image_name: shaker-image
