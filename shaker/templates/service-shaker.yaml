@@ -31,7 +31,7 @@ spec:
     {{ end }}
       targetPort: {{ tuple "shaker" "internal" "api" . | include "helm-toolkit.endpoints.endpoint_port_lookup" }}
   selector:
-{{ tuple $envAll "shaker" "controller" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
+{{ tuple $envAll "shaker" "run-tests" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 4 }}
   {{ if .Values.shaker.controller.node_port.enabled }}
   type: NodePort
   {{ if .Values.shaker.controller.external_policy_local }}
