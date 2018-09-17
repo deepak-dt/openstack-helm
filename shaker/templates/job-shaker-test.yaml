@@ -64,13 +64,6 @@ spec:
         - name: {{ .Release.Name }}-run-tests
 {{ tuple $envAll "shaker_run_tests" | include "helm-toolkit.snippets.image" | indent 10 }}
 {{ tuple $envAll $envAll.Values.pod.resources.jobs.run_tests | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
-          args:
-{{- if .Values.conf.shaker.shaker.DEFAULT.debug }}
-          - --debug
-{{- end }}
-{{- if not .Values.conf.shaker.shaker.DEFAULT.cleanup_on_error }}
-          - --nocleanup
-{{- end }}
           securityContext:
             runAsUser: {{ .Values.pod.user.shaker.uid }}
             privileged: false

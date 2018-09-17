@@ -55,8 +55,30 @@ fi
 
 IMAGE_NAME=$(openstack image show -f value -c name \
   $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
-  grep "^\"Cirros" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
-FLAVOR_ID=$(openstack flavor show m1.small -f value -c id)
+  grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
+
+if [ -z $IMAGE_NAME ]; then
+# Install shaker to use shaker-image-builder utility
+sudo apt-add-repository "deb http://nova.clouds.archive.ubuntu.com/ubuntu/ trusty multiverse"
+sudo apt-get update
+sudo apt-get -y install python-dev libzmq-dev
+sudo pip install pbr pyshaker
+
+# Export AUTH variables required by shaker-image-builder utility
+export OS_USERNAME="admin"
+export OS_PASSWORD="password"
+export OS_AUTH_URL="http://keystone.openstack.svc.cluster.local/v3"
+export OS_PROJECT_NAME="admin"
+
+# Run shaker-image-builder utility to build shaker image
+shaker-image-builder
+
+IMAGE_NAME=$(openstack image show -f value -c name \
+  $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
+  grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
+fi
+
+FLAVOR_ID=$(openstack flavor show "shaker-flavor" -f value -c id)
 IMAGE_ID=$(openstack image show "${IMAGE_NAME}" -f value -c id)
 
 # Shaker conf params
