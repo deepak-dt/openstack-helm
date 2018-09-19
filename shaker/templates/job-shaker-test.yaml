@@ -27,6 +27,8 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ print $envAll.Release.Name "-run-tests" }}
+  annotations:
+    "helm.sh/hook": test-success
 spec:
   template:
     metadata:

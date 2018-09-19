@@ -16,6 +16,33 @@
 
 set -xe
 
+: ${OSH_EXT_NET_NAME:="public"}
+: ${OSH_EXT_SUBNET_NAME:="public-subnet"}
+: ${OSH_EXT_SUBNET:="172.24.4.0/24"}
+: ${OSH_BR_EX_ADDR:="172.24.4.0/24"}
+: ${OSH_PRIVATE_SUBNET_POOL:="11.0.0.0/8"}
+: ${OSH_PRIVATE_SUBNET_POOL_NAME:="shared-default-subnetpool"}
+: ${OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX:="24"}
+: ${OSH_VM_KEY_STACK:="heat-vm-key"}
+: ${OSH_PRIVATE_SUBNET:="11.0.0.0/24"}
+
+# Shaker conf params
+: ${OS_USERNAME:="admin"}
+: ${OS_PASSWORD:="password"}
+: ${OS_AUTH_URL:="http://keystone.openstack.svc.cluster.local/v3"}
+: ${OS_PROJECT_NAME:="admin"}
+: ${OS_REGION_NAME:="RegionOne"}
+: ${EXTERNAL_NETWORK_NAME:=$OSH_EXT_NET_NAME}
+: ${SCENARIO:="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"}
+: ${AVAILABILITY_ZONE:="nova"}
+: ${REPORT_FILE:="/tmp/shaker-result.html"}
+: ${OUTPUT_FILE:="/tmp/shaker-result.json"}
+: ${FLAVOR_ID:="shaker-flavor"}
+: ${IMAGE_NAME:=""}
+: ${SERVER_ENDPOINT_INTF:="eth0"}
+
+: ${EXECUTE_TEST:=""}
+
 #NOTE: Pull images and lint chart
 make pull-images shaker
 
@@ -25,13 +52,9 @@ export OS_CLOUD=openstack_helm
 export stack_exists=`openstack stack list | grep heat-public-net-deployment | awk '{print $4}'`
 
 if [ -z $stack_exists ]; then
-export OSH_EXT_NET_NAME="public"
-export OSH_EXT_SUBNET_NAME="public-subnet"
-export OSH_EXT_SUBNET="172.24.4.0/24"
-export OSH_BR_EX_ADDR="172.24.4.1/24"
 openstack stack create --wait \
   --parameter network_name=${OSH_EXT_NET_NAME} \
-  --parameter physical_network_name=public \
+  --parameter physical_network_name=${OSH_EXT_NET_NAME} \
   --parameter subnet_name=${OSH_EXT_SUBNET_NAME} \
   --parameter subnet_cidr=${OSH_EXT_SUBNET} \
   --parameter subnet_gateway=${OSH_BR_EX_ADDR%/*} \
@@ -42,9 +65,6 @@ fi
 export stack_exists=`openstack stack list | grep heat-subnet-pool-deployment | awk '{print $4}'`
 
 if [ -z $stack_exists ]; then
-export OSH_PRIVATE_SUBNET_POOL="11.0.0.0/8"
-export OSH_PRIVATE_SUBNET_POOL_NAME="shared-default-subnetpool"
-export OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX="24"
 openstack stack create --wait \
   --parameter subnet_pool_name=${OSH_PRIVATE_SUBNET_POOL_NAME} \
   --parameter subnet_pool_prefixes=${OSH_PRIVATE_SUBNET_POOL} \
@@ -52,10 +72,6 @@ openstack stack create --wait \
   -t ./tools/gate/files/heat-subnet-pool-deployment.yaml \
   heat-subnet-pool-deployment
 fi
-
-IMAGE_NAME=$(openstack image show -f value -c name \
-  $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
-  grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
 
 if [ -z $IMAGE_NAME ]; then
 # Install shaker to use shaker-image-builder utility
@@ -65,12 +81,12 @@ sudo apt-get -y install python-dev libzmq-dev
 sudo pip install pbr pyshaker
 
 # Export AUTH variables required by shaker-image-builder utility
-export OS_USERNAME="admin"
-export OS_PASSWORD="password"
-export OS_AUTH_URL="http://keystone.openstack.svc.cluster.local/v3"
-export OS_PROJECT_NAME="admin"
-export OS_REGION_NAME="RegionOne"
-export EXTERNAL_NETWORK_NAME="public"
+export OS_USERNAME=${OS_USERNAME}
+export OS_PASSWORD=${OS_PASSWORD}
+export OS_AUTH_URL=${OS_AUTH_URL}
+export OS_PROJECT_NAME=${OS_PROJECT_NAME}
+export OS_REGION_NAME=${OS_REGION_NAME}
+export EXTERNAL_NETWORK_NAME=${EXTERNAL_NETWORK_NAME}
 
 # Run shaker-image-builder utility to build shaker image
 # For debug mode
@@ -84,34 +100,20 @@ IMAGE_NAME=$(openstack image show -f value -c name \
   grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
 fi
 
-FLAVOR_ID=$(openstack flavor show "shaker-flavor" -f value -c id)
+FLAVOR_ID=$(openstack flavor show "${FLAVOR_ID}" -f value -c id)
 IMAGE_ID=$(openstack image show "${IMAGE_NAME}" -f value -c id)
-
-# Shaker conf params
-OS_USERNAME="admin"
-OS_PASSWORD="password"
-OS_AUTH_URL="http://keystone.openstack.svc.cluster.local/v3"
-OS_PROJECT_NAME="admin"
-OS_REGION_NAME="RegionOne"
-EXTERNAL_NETWORK_NAME="public"
-SCENARIO="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"
-SERVER_ENDPOINT=172.17.0.1:31999
-AVAILABILITY_ZONE="nova"
-REPORT_FILE="/tmp/shaker-result.html"
-OUTPUT_FILE="/tmp/shaker-result.json"
 
 #NOTE: Deploy shaker pods
 tee /tmp/shaker.yaml << EOF
 conf:
   script: |
     sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
-    cat ${SCENARIO}
-    export server_endpoint=\`ip a | grep "global eth0" | cut -f6 -d' ' | cut -f1 -d'/'\`
+    export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
     shaker --server-endpoint \$server_endpoint:31999 --config-file /opt/shaker/shaker.conf
-    while true; do
-       echo `date`
-       sleep 5
-    done
+    #while true; do
+    #   echo `date`
+    #   sleep 5
+    #done
   shaker:
     shaker:
       DEFAULT:
@@ -146,3 +148,7 @@ helm upgrade --install shaker ./shaker \
 
 #NOTE: Validate Deployment info
 kubectl get -n openstack jobs --show-all
+
+if [ -n $EXECUTE_TEST ]; then
+helm test shaker --timeout 900
+fi
