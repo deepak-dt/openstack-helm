@@ -69,8 +69,14 @@ export OS_USERNAME="admin"
 export OS_PASSWORD="password"
 export OS_AUTH_URL="http://keystone.openstack.svc.cluster.local/v3"
 export OS_PROJECT_NAME="admin"
+export OS_REGION_NAME="RegionOne"
+export EXTERNAL_NETWORK_NAME="public"
 
 # Run shaker-image-builder utility to build shaker image
+# For debug mode
+# shaker-image-builder --nocleanup-on-error --debug
+# For debug mode - with disk-image-builder mode
+# shaker-image-builder --nocleanup-on-error --debug --image-builder-mode dib
 shaker-image-builder
 
 IMAGE_NAME=$(openstack image show -f value -c name \
