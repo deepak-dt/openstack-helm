@@ -49,6 +49,12 @@ make pull-images shaker
 #NOTE: Deploy command
 export OS_CLOUD=openstack_helm
 
+IMAGE_NAME=$(openstack image show -f value -c name \
+  $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
+  grep "^\"Cirros" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
+
+FLAVOR_ID="m1.tiny"
+
 export stack_exists=`openstack stack list | grep heat-public-net-deployment | awk '{print $4}'`
 
 if [ -z $stack_exists ]; then

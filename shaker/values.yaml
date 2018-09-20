@@ -248,6 +248,6 @@ manifests:
   configmap_etc: true
   job_image_repo_sync: true
   job_ks_user: true
-  job_shaker_test: true
+  pod_shaker_test: true
   service_shaker: true
   secret_keystone: true
