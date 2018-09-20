@@ -49,13 +49,14 @@ make pull-images shaker
 #NOTE: Deploy command
 export OS_CLOUD=openstack_helm
 
+# TEMPORARY - to be REMOVED
 IMAGE_NAME=$(openstack image show -f value -c name \
   $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
   grep "^\"Cirros" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
 
 FLAVOR_ID="m1.tiny"
 
-export stack_exists=`openstack stack list | grep heat-public-net-deployment | awk '{print $4}'`
+export stack_exists=`openstack network list | grep ${OSH_EXT_NET_NAME} | awk '{print $4}'`
 
 if [ -z $stack_exists ]; then
 openstack stack create --wait \
@@ -68,7 +69,7 @@ openstack stack create --wait \
   heat-public-net-deployment
 fi
 
-export stack_exists=`openstack stack list | grep heat-subnet-pool-deployment | awk '{print $4}'`
+export stack_exists=`openstack subnet pool list | grep ${OSH_PRIVATE_SUBNET_POOL_NAME} | awk '{print $4}'`
 
 if [ -z $stack_exists ]; then
 openstack stack create --wait \
