@@ -18,7 +18,7 @@
 # name: value
 
 labels:
-  job:
+  pod:
     node_selector_key: openstack-control-plane
     node_selector_value: enabled
 
