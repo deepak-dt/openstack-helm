@@ -40,6 +40,7 @@ set -xe
 : ${FLAVOR_ID:="shaker-flavor"}
 : ${IMAGE_NAME:=""}
 : ${SERVER_ENDPOINT_INTF:="eth0"}
+: ${SHAKER_PORT:=31999}
 
 : ${EXECUTE_TEST:="true"}
 
@@ -80,6 +81,10 @@ openstack stack create --wait \
   heat-subnet-pool-deployment
 fi
 
+default_sec_grp_id=`openstack security group list --project ${OS_PROJECT_NAME} | grep default | awk '{split(\$0,a,"|"); print a[2]}'`
+openstack security group rule create --proto icmp $default_sec_grp_id
+openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $default_sec_grp_id
+
 if [ -z $IMAGE_NAME ]; then
 # Install shaker to use shaker-image-builder utility
 sudo apt-add-repository "deb http://nova.clouds.archive.ubuntu.com/ubuntu/ trusty multiverse"
@@ -116,7 +121,7 @@ conf:
   script: |
     sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
     export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
-    shaker --server-endpoint \$server_endpoint:31999 --config-file /opt/shaker/shaker.conf
+    shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf
     #while true; do
     #   echo `date`
     #   sleep 5
