@@ -230,3 +230,14 @@
         ./tools/deployment/developer/ceph/900-use-it.sh
       args:
         chdir: "{{ zuul_osh_relative_path | default(zuul.project.src_dir) }}"
+    - name: Deploy Shaker
+      environment:
+        OSH_OPENSTACK_RELEASE: "{{ osh_openstack_release }}"
+        OSH_EXTRA_HELM_ARGS: "{{ zuul_osh_extra_helm_args_relative_path | default('') }}"
+        OSH_INFRA_PATH: "{{ zuul_osh_infra_relative_path | default('') }}"
+        zuul_site_mirror_fqdn: "{{ zuul_site_mirror_fqdn }}"
+      shell: |
+        set -xe;
+        ./tools/deployment/developer/ceph/800-shaker.sh
+      args:
+        chdir: "{{ zuul_osh_relative_path | default(zuul.project.src_dir) }}"

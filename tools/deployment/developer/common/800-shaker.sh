@@ -41,7 +41,7 @@ set -xe
 : ${IMAGE_NAME:=""}
 : ${SERVER_ENDPOINT_INTF:="eth0"}
 
-: ${EXECUTE_TEST:=""}
+: ${EXECUTE_TEST:="true"}
 
 #NOTE: Pull images and lint chart
 make pull-images shaker

@@ -110,3 +110,9 @@
         ./tools/deployment/multinode/900-tempest.sh
       args:
         chdir: "{{ zuul.project.src_dir }}"
+    - name: Deploy Shaker
+      shell: |
+        set -xe;
+        ./tools/deployment/multinode/800-tempest.sh
+      args:
+        chdir: "{{ zuul.project.src_dir }}"
