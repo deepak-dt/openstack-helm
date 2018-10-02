@@ -82,8 +82,12 @@ openstack stack create --wait \
 fi
 
 default_sec_grp_id=`openstack security group list --project ${OS_PROJECT_NAME} | grep default | awk '{split(\$0,a,"|"); print a[2]}'`
-openstack security group rule create --proto icmp $default_sec_grp_id
-openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $default_sec_grp_id
+for sg in $default_sec_grp_id
+do
+  icmp=`openstack security group rule list $sg | grep icmp | awk '{split(\$0,a,"|"); print a[2]}'`
+  if [ "${icmp}" = "" ]; then openstack security group rule create --proto icmp $sg; fi
+  openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $sg
+done
 
 if [ -z $IMAGE_NAME ]; then
 # Install shaker to use shaker-image-builder utility
