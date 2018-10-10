@@ -112,12 +112,9 @@ dependencies:
 
 conf:
   script: |
-    echo "Shaker Tests - Hello World!"
-    shaker --help
-    while true; do
-       echo `date`
-       sleep 5
-    done
+    sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" /opt/shaker/shaker/scenarios/openstack/full_l2.yaml
+    export server_endpoint=\`ip a | grep "global eth0" | cut -f6 -d' ' | cut -f1 -d'/'\`
+    shaker --server-endpoint \$server_endpoint:31999 --config-file /opt/shaker/shaker.conf
 
   # The following sections can be used to group shaker tests.
   # If either section is not empty, it will be used to create an entry in the

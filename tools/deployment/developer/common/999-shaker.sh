@@ -41,8 +41,12 @@ set -xe
 : ${IMAGE_NAME:=""}
 : ${SERVER_ENDPOINT_INTF:="eth0"}
 : ${SHAKER_PORT:=31999}
+: ${COMPUTE_NODES:=1}
 
 : ${EXECUTE_TEST:="true"}
+: ${DEBUG:="true"}
+: ${CLEANUP_ON_ERROR:="true"}
+
 
 #NOTE: Pull images and lint chart
 make pull-images shaker
@@ -126,17 +130,12 @@ conf:
     sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
     export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
     shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf
-    #while true; do
-    #   echo `date`
-    #   sleep 5
-    #done
   shaker:
     shaker:
       DEFAULT:
-        debug: true
-        cleanup_on_error: false
-        compute_nodes: 1
-        #server_endpoint: ${SERVER_ENDPOINT}
+        debug: ${DEBUG}
+        cleanup_on_error: ${CLEANUP_ON_ERROR}
+        compute_nodes: ${COMPUTE_NODES}
         report: ${REPORT_FILE}
         output: ${OUTPUT_FILE}
         scenario: ${SCENARIO}
@@ -151,7 +150,7 @@ conf:
         os_region_name: ${OS_REGION_NAME}
 EOF
 
-envsubst < /tmp/shaker.yaml
+#envsubst < /tmp/shaker.yaml
 
 helm upgrade --install shaker ./shaker \
   --namespace=openstack \
@@ -166,5 +165,5 @@ helm upgrade --install shaker ./shaker \
 kubectl get -n openstack jobs --show-all
 
 if [ -n $EXECUTE_TEST ]; then
-helm test shaker --timeout 900
+helm test shaker --timeout 2700
 fi

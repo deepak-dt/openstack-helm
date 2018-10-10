@@ -223,6 +223,6 @@
         zuul_site_mirror_fqdn: "{{ zuul_site_mirror_fqdn }}"
       shell: |
         set -xe;
-        ./tools/deployment/developer/nfs/800-shaker.sh
+        ./tools/deployment/developer/nfs/999-shaker.sh
       args:
         chdir: "{{ zuul_osh_relative_path | default(zuul.project.src_dir) }}"
