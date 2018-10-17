@@ -19,7 +19,7 @@ set -xe
 : ${OSH_EXT_NET_NAME:="public"}
 : ${OSH_EXT_SUBNET_NAME:="public-subnet"}
 : ${OSH_EXT_SUBNET:="172.24.4.0/24"}
-: ${OSH_BR_EX_ADDR:="172.24.4.0/24"}
+: ${OSH_BR_EX_ADDR:="172.24.4.1/24"}
 : ${OSH_PRIVATE_SUBNET_POOL:="11.0.0.0/8"}
 : ${OSH_PRIVATE_SUBNET_POOL_NAME:="shared-default-subnetpool"}
 : ${OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX:="24"}
