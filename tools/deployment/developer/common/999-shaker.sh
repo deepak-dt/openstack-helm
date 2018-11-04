@@ -14,6 +14,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+# sudo -H -E su -c 'export OSH_EXT_NET_NAME="public"; \
+#                  export OSH_EXT_SUBNET_NAME="public-subnet"; \
+#                  export OS_USERNAME="dt967u"; \
+#                  export OS_PASSWORD=""; \
+#                  export OS_AUTH_URL="https://identity-nc.mtn13b3.cci.att.com:443/v3"; \
+#                  export OS_PROJECT_NAME="taas-testing"; \
+#                  export OS_REGION_NAME="mtn13b3"; \
+#                  export OS_PROJECT_ID=af7dac7909754202a0edc58e663f22fe; \
+#                  export OS_PROJECT_DOMAIN_NAME="nc"; \
+#                  export OS_USER_DOMAIN_NAME="nc"; \
+#                  export OS_IDENTITY_API_VERSION=3; \
+#                  export EXTERNAL_NETWORK_NAME="public"; \
+#                  export SCENARIO="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"; \
+#                  export AVAILABILITY_ZONE="nova"; \
+#                  export REPORT_FILE="/tmp/shaker-result.html"; \
+#                  export OUTPUT_FILE="/tmp/shaker-result.json"; \
+#                  export FLAVOR_ID="m1.medium"; \
+#                  export IMAGE_NAME="shaker-image-450"; \
+#                  cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/ceph/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
+
 set -xe
 
 : ${OSH_EXT_NET_NAME:="public"}
@@ -32,13 +52,16 @@ set -xe
 : ${OS_AUTH_URL:="http://keystone.openstack.svc.cluster.local/v3"}
 : ${OS_PROJECT_NAME:="admin"}
 : ${OS_REGION_NAME:="RegionOne"}
+: ${OS_USER_DOMAIN_NAME:="Default"}
+: ${OS_PROJECT_DOMAIN_NAME:="Default"}
+: ${OS_PROJECT_ID:=""}
 : ${EXTERNAL_NETWORK_NAME:=$OSH_EXT_NET_NAME}
 : ${SCENARIO:="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"}
 : ${AVAILABILITY_ZONE:="nova"}
 : ${REPORT_FILE:="/tmp/shaker-result.html"}
 : ${OUTPUT_FILE:="/tmp/shaker-result.json"}
 : ${FLAVOR_ID:="shaker-flavor"}
-: ${IMAGE_NAME:=""}
+: ${IMAGE_NAME:="shaker-image"}
 : ${SERVER_ENDPOINT_INTF:="eth0"}
 : ${SHAKER_PORT:=31999}
 : ${COMPUTE_NODES:=1}
@@ -52,14 +75,18 @@ set -xe
 make pull-images shaker
 
 #NOTE: Deploy command
-export OS_CLOUD=openstack_helm
+#export OS_CLOUD=openstack_helm
 
-# TEMPORARY - to be REMOVED
-IMAGE_NAME=$(openstack image show -f value -c name \
-  $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
-  grep "^\"Cirros" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
-
-FLAVOR_ID="m1.tiny"
+# Export AUTH variables required by shaker-image-builder utility
+export OS_USERNAME=${OS_USERNAME}
+export OS_PASSWORD=${OS_PASSWORD}
+export OS_AUTH_URL=${OS_AUTH_URL}
+export OS_PROJECT_NAME=${OS_PROJECT_NAME}
+export OS_REGION_NAME=${OS_REGION_NAME}
+export EXTERNAL_NETWORK_NAME=${EXTERNAL_NETWORK_NAME}
+export OS_PROJECT_ID=${OS_PROJECT_ID}
+export OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME}
+export OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME}
 
 export stack_exists=`openstack network list | grep ${OSH_EXT_NET_NAME} | awk '{print $4}'`
 
@@ -74,16 +101,16 @@ openstack stack create --wait \
   heat-public-net-deployment
 fi
 
-export stack_exists=`openstack subnet pool list | grep ${OSH_PRIVATE_SUBNET_POOL_NAME} | awk '{print $4}'`
-
-if [ -z $stack_exists ]; then
-openstack stack create --wait \
-  --parameter subnet_pool_name=${OSH_PRIVATE_SUBNET_POOL_NAME} \
-  --parameter subnet_pool_prefixes=${OSH_PRIVATE_SUBNET_POOL} \
-  --parameter subnet_pool_default_prefix_length=${OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX} \
-  -t ./tools/gate/files/heat-subnet-pool-deployment.yaml \
-  heat-subnet-pool-deployment
-fi
+#export stack_exists=`openstack subnet pool list | grep ${OSH_PRIVATE_SUBNET_POOL_NAME} | awk '{print $4}'`
+#
+#if [ -z $stack_exists ]; then
+#openstack stack create --wait \
+#  --parameter subnet_pool_name=${OSH_PRIVATE_SUBNET_POOL_NAME} \
+#  --parameter subnet_pool_prefixes=${OSH_PRIVATE_SUBNET_POOL} \
+#  --parameter subnet_pool_default_prefix_length=${OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX} \
+#  -t ./tools/gate/files/heat-subnet-pool-deployment.yaml \
+#  heat-subnet-pool-deployment
+#fi
 
 default_sec_grp_id=`openstack security group list --project ${OS_PROJECT_NAME} | grep default | awk '{split(\$0,a,"|"); print a[2]}'`
 for sg in $default_sec_grp_id
@@ -93,20 +120,16 @@ do
   openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $sg
 done
 
+IMAGE_NAME=$(openstack image show -f value -c name \
+  $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
+  grep "${IMAGE_NAME}" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
+
 if [ -z $IMAGE_NAME ]; then
 # Install shaker to use shaker-image-builder utility
 sudo apt-add-repository "deb http://nova.clouds.archive.ubuntu.com/ubuntu/ trusty multiverse"
 sudo apt-get update
 sudo apt-get -y install python-dev libzmq-dev
 sudo pip install pbr pyshaker
-
-# Export AUTH variables required by shaker-image-builder utility
-export OS_USERNAME=${OS_USERNAME}
-export OS_PASSWORD=${OS_PASSWORD}
-export OS_AUTH_URL=${OS_AUTH_URL}
-export OS_PROJECT_NAME=${OS_PROJECT_NAME}
-export OS_REGION_NAME=${OS_REGION_NAME}
-export EXTERNAL_NETWORK_NAME=${EXTERNAL_NETWORK_NAME}
 
 # Run shaker-image-builder utility to build shaker image
 # For debug mode
@@ -148,6 +171,10 @@ conf:
         os_auth_url: ${OS_AUTH_URL}
         os_project_name: ${OS_PROJECT_NAME}
         os_region_name: ${OS_REGION_NAME}
+        os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}
+        os_user_domain_name: ${OS_USER_DOMAIN_NAME}
+        os_identity_api_version: 3
+        os_interface: ${EXTERNAL_NETWORK_NAME}
 EOF
 
 #envsubst < /tmp/shaker.yaml
