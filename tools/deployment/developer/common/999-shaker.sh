@@ -117,7 +117,8 @@ for sg in $default_sec_grp_id
 do
   icmp=`openstack security group rule list $sg | grep icmp | awk '{split(\$0,a,"|"); print a[2]}'`
   if [ "${icmp}" = "" ]; then openstack security group rule create --proto icmp $sg; fi
-  openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $sg
+  shaker=`openstack security group rule list $sg | grep tcp | grep ${SHAKER_PORT} | awk '{split(\$0,a,"|"); print a[2]}'`
+  if [ "${shaker}" = "" ]; then openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $sg; fi
 done
 
 IMAGE_NAME=$(openstack image show -f value -c name \
