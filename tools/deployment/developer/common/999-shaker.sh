@@ -32,9 +32,13 @@
 #                  export OUTPUT_FILE="/tmp/shaker-result.json"; \
 #                  export FLAVOR_ID="m1.medium"; \
 #                  export IMAGE_NAME="shaker-image-450"; \
+#                  export OS_IDENTITY_API_VERSION="3"
+#                  export PROXY_URL=""
 #                  cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/ceph/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
 
 set -xe
+
+: ${PROXY_URL:=""}
 
 : ${OSH_EXT_NET_NAME:="public"}
 : ${OSH_EXT_SUBNET_NAME:="public-subnet"}
@@ -58,6 +62,9 @@ set -xe
 : ${EXTERNAL_NETWORK_NAME:=$OSH_EXT_NET_NAME}
 : ${SCENARIO:="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"}
 : ${AVAILABILITY_ZONE:="nova"}
+: ${OS_IDENTITY_API_VERSION:="3"}
+: ${OS_INTERFACE:="public"}
+
 : ${REPORT_FILE:="/tmp/shaker-result.html"}
 : ${OUTPUT_FILE:="/tmp/shaker-result.json"}
 : ${FLAVOR_ID:="shaker-flavor"}
@@ -75,7 +82,6 @@ set -xe
 make pull-images shaker
 
 #NOTE: Deploy command
-#export OS_CLOUD=openstack_helm
 
 # Export AUTH variables required by shaker-image-builder utility
 export OS_USERNAME=${OS_USERNAME}
@@ -85,8 +91,14 @@ export OS_PROJECT_NAME=${OS_PROJECT_NAME}
 export OS_REGION_NAME=${OS_REGION_NAME}
 export EXTERNAL_NETWORK_NAME=${EXTERNAL_NETWORK_NAME}
 export OS_PROJECT_ID=${OS_PROJECT_ID}
+
+if [ $OS_IDENTITY_API_VERSION = "3" ]; then
 export OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME}
 export OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME}
+else
+export OS_PROJECT_DOMAIN_NAME=
+export OS_USER_DOMAIN_NAME=
+fi
 
 export stack_exists=`openstack network list | grep ${OSH_EXT_NET_NAME} | awk '{print $4}'`
 
@@ -100,17 +112,6 @@ openstack stack create --wait \
   -t ./tools/gate/files/heat-public-net-deployment.yaml \
   heat-public-net-deployment
 fi
-
-#export stack_exists=`openstack subnet pool list | grep ${OSH_PRIVATE_SUBNET_POOL_NAME} | awk '{print $4}'`
-#
-#if [ -z $stack_exists ]; then
-#openstack stack create --wait \
-#  --parameter subnet_pool_name=${OSH_PRIVATE_SUBNET_POOL_NAME} \
-#  --parameter subnet_pool_prefixes=${OSH_PRIVATE_SUBNET_POOL} \
-#  --parameter subnet_pool_default_prefix_length=${OSH_PRIVATE_SUBNET_POOL_DEF_PREFIX} \
-#  -t ./tools/gate/files/heat-subnet-pool-deployment.yaml \
-#  heat-subnet-pool-deployment
-#fi
 
 default_sec_grp_id=`openstack security group list --project ${OS_PROJECT_NAME} | grep default | awk '{split(\$0,a,"|"); print a[2]}'`
 for sg in $default_sec_grp_id
@@ -144,29 +145,39 @@ IMAGE_NAME=$(openstack image show -f value -c name \
   grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
 fi
 
-FLAVOR_ID=$(openstack flavor show "${FLAVOR_ID}" -f value -c id)
-IMAGE_ID=$(openstack image show "${IMAGE_NAME}" -f value -c id)
-
 #NOTE: Deploy shaker pods
 tee /tmp/shaker.yaml << EOF
 conf:
   script: |
     sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
     export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
+
+    echo ===========================
+    printenv | grep -i os_
+    unset OS_REGION_NAME
+    unset OS_USER_DOMAIN_NAME
+    unset OS_PROJECT_DOMAIN_NAME
+    unset OS_IDENTITY_API_VERSION
+    unset OS_INTERFACE
+
+    echo ==========  SHAKER CONF PARAMETERS  =================
+    cat /opt/shaker/shaker.conf
+    echo =====================================================
+
     shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf
   shaker:
     shaker:
       DEFAULT:
         debug: ${DEBUG}
         cleanup_on_error: ${CLEANUP_ON_ERROR}
-        compute_nodes: ${COMPUTE_NODES}
+        scenario_compute_nodes: ${COMPUTE_NODES}
         report: ${REPORT_FILE}
         output: ${OUTPUT_FILE}
         scenario: ${SCENARIO}
         flavor_name: ${FLAVOR_ID}
         external_net: ${EXTERNAL_NETWORK_NAME}
-        image_name: ${IMAGE_ID}
-        availability_zone: ${AVAILABILITY_ZONE}
+        image_name: ${IMAGE_NAME}
+        scenario_availability_zone: ${AVAILABILITY_ZONE}
         os_username: ${OS_USERNAME}
         os_password: ${OS_PASSWORD}
         os_auth_url: ${OS_AUTH_URL}
@@ -174,11 +185,9 @@ conf:
         os_region_name: ${OS_REGION_NAME}
         os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}
         os_user_domain_name: ${OS_USER_DOMAIN_NAME}
-        os_identity_api_version: 3
-        os_interface: ${EXTERNAL_NETWORK_NAME}
+        os_identity_api_version: ${OS_IDENTITY_API_VERSION}
+        os_interface: ${OS_INTERFACE}
 EOF
-
-#envsubst < /tmp/shaker.yaml
 
 helm upgrade --install shaker ./shaker \
   --namespace=openstack \

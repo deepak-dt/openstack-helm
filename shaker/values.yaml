@@ -28,7 +28,7 @@ labels:
 images:
   tags:
     dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.3.1
-    shaker_run_tests: docker.io/shakhat/shaker:latest
+    shaker_run_tests: docker.io/performa/shaker:latest
     ks_user: docker.io/openstackhelm/heat:newton
     image_repo_sync: docker.io/docker:17.07.0
   pull_policy: "IfNotPresent"
