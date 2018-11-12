@@ -84,6 +84,7 @@ shaker:
     node_port:
       enabled: true
       port: 31999
+    external_ip: 9.9.9.4
 
 dependencies:
   dynamic:

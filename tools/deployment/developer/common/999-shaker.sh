@@ -32,8 +32,8 @@
 #                  export OUTPUT_FILE="/tmp/shaker-result.json"; \
 #                  export FLAVOR_ID="m1.medium"; \
 #                  export IMAGE_NAME="shaker-image-450"; \
-#                  export OS_IDENTITY_API_VERSION="3"
-#                  export PROXY_URL=""
+#                  export SERVER_ENDPOINT_IP=""; \
+#                  export PROXY_URL=""; \
 #                  cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/ceph/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
 
 set -xe
@@ -69,6 +69,7 @@ set -xe
 : ${OUTPUT_FILE:="/tmp/shaker-result.json"}
 : ${FLAVOR_ID:="shaker-flavor"}
 : ${IMAGE_NAME:="shaker-image"}
+: ${SERVER_ENDPOINT_IP:=""}
 : ${SERVER_ENDPOINT_INTF:="eth0"}
 : ${SHAKER_PORT:=31999}
 : ${COMPUTE_NODES:=1}
@@ -150,7 +151,12 @@ tee /tmp/shaker.yaml << EOF
 conf:
   script: |
     sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
+
+    if [ -z ${SERVER_ENDPOINT_IP} ]; then
     export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
+    else
+    export server_endpoint=${SERVER_ENDPOINT_IP}
+    fi
 
     echo ===========================
     printenv | grep -i os_
@@ -183,10 +189,13 @@ conf:
         os_auth_url: ${OS_AUTH_URL}
         os_project_name: ${OS_PROJECT_NAME}
         os_region_name: ${OS_REGION_NAME}
-        os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}
-        os_user_domain_name: ${OS_USER_DOMAIN_NAME}
+        #os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}
+        #os_user_domain_name: ${OS_USER_DOMAIN_NAME}
         os_identity_api_version: ${OS_IDENTITY_API_VERSION}
         os_interface: ${OS_INTERFACE}
+shaker:
+  controller:
+    external_ip: ${SERVER_ENDPOINT_IP}
 EOF
 
 helm upgrade --install shaker ./shaker \

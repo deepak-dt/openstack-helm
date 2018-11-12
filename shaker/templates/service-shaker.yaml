@@ -38,4 +38,6 @@ spec:
   externalTrafficPolicy: Local
   {{ end }}
   {{ end }}
+  externalIPs:
+    - {{ .Values.shaker.controller.external_ip }}
 {{- end }}
