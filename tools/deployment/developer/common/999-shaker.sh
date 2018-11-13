@@ -145,6 +145,12 @@ fi
 
 #NOTE: Deploy shaker pods
 tee /tmp/shaker.yaml << EOF
+shaker:
+  controller:
+    external_ip: ${SERVER_ENDPOINT_IP}
+images:
+  tags:
+    shaker_run_tests: docker.io/performa/shaker:latest
 conf:
   script: |
     sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
@@ -182,17 +188,16 @@ conf:
         os_auth_url: ${OS_AUTH_URL}
         os_project_name: ${OS_PROJECT_NAME}
         os_region_name: ${OS_REGION_NAME}
-        #os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}
-        #os_user_domain_name: ${OS_USER_DOMAIN_NAME}
         os_identity_api_version: ${OS_IDENTITY_API_VERSION}
         os_interface: ${OS_INTERFACE}
-shaker:
-  controller:
-    external_ip: ${SERVER_ENDPOINT_IP}
-images:
-  tags:
-    shaker_run_tests: docker.io/performa/shaker:latest
 EOF
+
+if [ $OS_IDENTITY_API_VERSION = "3" ]; then
+tee /tmp/shaker.yaml << EOF
+        os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}
+        os_user_domain_name: ${OS_USER_DOMAIN_NAME}
+EOF
+fi
 
 helm upgrade --install shaker ./shaker \
   --namespace=openstack \
