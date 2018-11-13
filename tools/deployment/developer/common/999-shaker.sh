@@ -160,27 +160,13 @@ conf:
 
     echo ===========================
     printenv | grep -i os_
-    unset OS_AUTH_URL
-    unset SERVICE_OS_USER_DOMAIN_NAME
-    unset SERVICE_OS_REGION_NAME
-    unset SERVICE_OS_PROJECT_NAME
-    unset OS_PROJECT_NAME
-    unset SERVICE_OS_PASSWORD
-    unset OS_PASSWORD
-    unset OS_USERNAME
-    unset SERVICE_OS_USERNAME
-    unset SERVICE_OS_PROJECT_DOMAIN_NAME
-    unset OS_REGION_NAME
-    unset OS_USER_DOMAIN_NAME
-    unset OS_PROJECT_DOMAIN_NAME
-    unset OS_IDENTITY_API_VERSION
-    unset OS_INTERFACE
 
     echo ==========  SHAKER CONF PARAMETERS  =================
     cat /opt/shaker/shaker.conf
     echo =====================================================
 
-    shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf
+    env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf"
+
   shaker:
     shaker:
       DEFAULT:
