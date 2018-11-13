@@ -33,12 +33,9 @@
 #                  export FLAVOR_ID="m1.medium"; \
 #                  export IMAGE_NAME="shaker-image-450"; \
 #                  export SERVER_ENDPOINT_IP=""; \
-#                  export PROXY_URL=""; \
-#                  cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/ceph/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
+#                  cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/common/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
 
 set -xe
-
-: ${PROXY_URL:=""}
 
 : ${OSH_EXT_NET_NAME:="public"}
 : ${OSH_EXT_SUBNET_NAME:="public-subnet"}
