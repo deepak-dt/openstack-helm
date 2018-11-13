@@ -160,6 +160,16 @@ conf:
 
     echo ===========================
     printenv | grep -i os_
+    unset OS_AUTH_URL
+    unset SERVICE_OS_USER_DOMAIN_NAME
+    unset SERVICE_OS_REGION_NAME
+    unset SERVICE_OS_PROJECT_NAME
+    unset OS_PROJECT_NAME
+    unset SERVICE_OS_PASSWORD
+    unset OS_PASSWORD
+    unset OS_USERNAME
+    unset SERVICE_OS_USERNAME
+    unset SERVICE_OS_PROJECT_DOMAIN_NAME
     unset OS_REGION_NAME
     unset OS_USER_DOMAIN_NAME
     unset OS_PROJECT_DOMAIN_NAME
@@ -196,6 +206,9 @@ conf:
 shaker:
   controller:
     external_ip: ${SERVER_ENDPOINT_IP}
+images:
+  tags:
+    shaker_run_tests: docker.io/performa/shaker:latest
 EOF
 
 helm upgrade --install shaker ./shaker \

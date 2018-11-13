@@ -142,19 +142,21 @@ conf:
         debug: true
         cleanup_on_error: false
         #server_endpoint: 172.20.9.7:31999
+        scenario_compute_nodes: 1
         report: /opt/shaker/result.html
         output: /opt/shaker/result.json
         scenario: /opt/shaker/shaker/scenarios/openstack/full_l2.yaml
         flavor_name: m1.small
         external_net: public
         image_name: shaker-image
-        availability_zone: nova
-        compute_nodes: 1
+        scenario_availability_zone: nova
         os_username: admin
         os_password: password
         os_auth_url: "http://keystone.openstack.svc.cluster.local/v3"
         os_project_name: admin
         os_region_name: RegionOne
+        os_identity_api_version: 3
+        os_interface: public
     validation:
       connect_method: floating
     volume:
