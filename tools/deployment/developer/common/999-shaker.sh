@@ -28,8 +28,6 @@
 #                  export EXTERNAL_NETWORK_NAME="public"; \
 #                  export SCENARIO="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"; \
 #                  export AVAILABILITY_ZONE="nova"; \
-#                  export REPORT_FILE="/tmp/shaker-result.html"; \
-#                  export OUTPUT_FILE="/tmp/shaker-result.json"; \
 #                  export FLAVOR_ID="m1.medium"; \
 #                  export IMAGE_NAME="shaker-image-450"; \
 #                  export SERVER_ENDPOINT_IP=""; \
@@ -166,10 +164,10 @@ conf:
     printenv | grep -i os_
 
     echo ==========  SHAKER CONF PARAMETERS  =================
-    cat /opt/shaker/shaker.conf
+    cat /opt/shaker/data/shaker.conf
     echo =====================================================
 
-    env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf"
+    env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/data/shaker.conf"
 
   shaker:
     shaker:
