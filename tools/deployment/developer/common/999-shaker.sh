@@ -164,10 +164,10 @@ conf:
     printenv | grep -i os_
 
     echo ==========  SHAKER CONF PARAMETERS  =================
-    cat /opt/shaker/data/shaker.conf
+    cat /opt/shaker/shaker.conf
     echo =====================================================
 
-    env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/data/shaker.conf"
+    env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf"
 
   shaker:
     shaker:
@@ -214,6 +214,6 @@ if [ -n $EXECUTE_TEST ]; then
 helm test shaker --timeout 2700
 fi
 
-kubectl cp openstack/$POD_NAME:/opt/shaker/data/shaker-result.html /tmp/shaker-result.html
-kubectl cp openstack/$POD_NAME:/opt/shaker/data/shaker-result.json /tmp/shaker-result.json
-kubectl cp openstack/$POD_NAME:/opt/shaker/data/shaker.conf /tmp/shaker.conf
+kubectl cp openstack/$POD_NAME:/opt/shaker/shaker.conf /tmp/shaker.conf
+kubectl cp openstack/$POD_NAME:${REPORT_FILE} /tmp/shaker-result.html
+kubectl cp openstack/$POD_NAME:${OUTPUT_FILE} /tmp/shaker-result.json
