@@ -62,8 +62,8 @@ set -xe
 : ${OS_IDENTITY_API_VERSION:="3"}
 : ${OS_INTERFACE:="public"}
 
-: ${REPORT_FILE:="/tmp/shaker-result.html"}
-: ${OUTPUT_FILE:="/tmp/shaker-result.json"}
+: ${REPORT_FILE:="/var/lib/shaker/data/shaker-result.html"}
+: ${OUTPUT_FILE:="/var/lib/shaker/data/shaker-result.json"}
 : ${FLAVOR_ID:="shaker-flavor"}
 : ${IMAGE_NAME:="shaker-image"}
 : ${SERVER_ENDPOINT_IP:=""}
@@ -74,6 +74,7 @@ set -xe
 : ${EXECUTE_TEST:="true"}
 : ${DEBUG:="true"}
 : ${CLEANUP_ON_ERROR:="true"}
+: ${POD_NAME:="shaker-run-tests"}
 
 
 #NOTE: Pull images and lint chart
@@ -214,3 +215,7 @@ kubectl get -n openstack jobs --show-all
 if [ -n $EXECUTE_TEST ]; then
 helm test shaker --timeout 2700
 fi
+
+kubectl cp openstack/$POD_NAME:/var/lib/shaker/data/shaker-result.html /tmp/shaker-result.html
+kubectl cp openstack/$POD_NAME:/var/lib/shaker/data/shaker-result.json /tmp/shaker-result.json
+kubectl cp openstack/$POD_NAME:/opt/shaker/shaker.conf /tmp/shaker.conf
