@@ -59,6 +59,19 @@ spec:
 {{- end }}
         - name: SERVICE_OS_ROLE
           value: {{ .Values.endpoints.identity.auth.shaker.role | quote }}
+    - name: {{ .Release.Name }}-perms
+{{ tuple $envAll "shaker_run_tests" | include "helm-toolkit.snippets.image" | indent 6 }}
+      securityContext:
+        runAsUser: 0
+{{ tuple $envAll $envAll.Values.pod.resources.jobs.run_tests | include "helm-toolkit.snippets.kubernetes_resources" | indent 6 }}
+      command:
+        - chown
+        - -R
+        - "shaker:"
+        - /opt/shaker/data/
+      volumeMounts:
+        - name: shaker-reports
+          mountPath: /opt/shaker/data/
   containers:
     - name: {{ .Release.Name }}-run-tests
 {{ tuple $envAll "shaker_run_tests" | include "helm-toolkit.snippets.image" | indent 6 }}
@@ -94,7 +107,6 @@ spec:
           mountPath: /opt/shaker/db/
         - name: shaker-reports
           mountPath: /opt/shaker/data/
-          readOnly: false
         - name: shaker-etc
           mountPath: /opt/shaker/shaker.conf
           subPath: shaker.conf
