@@ -143,8 +143,8 @@ conf:
         cleanup_on_error: false
         #server_endpoint: 172.20.9.7:31999
         scenario_compute_nodes: 1
-        report: /var/lib/shaker/data/shaker-result.html
-        output: /var/lib/shaker/data/shaker-result.json
+        report: /opt/shaker/data/shaker-result.html
+        output: /opt/shaker/data/shaker-result.json
         scenario: /opt/shaker/shaker/scenarios/openstack/full_l2.yaml
         flavor_name: m1.small
         external_net: public

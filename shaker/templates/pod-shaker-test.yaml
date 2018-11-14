@@ -91,12 +91,12 @@ spec:
           subPath: run-tests.sh
           readOnly: true
         - name: shaker-db
-          mountPath: /var/lib/shaker
+          mountPath: /opt/shaker/data/db/
         - name: shaker-reports
-          mountPath: /var/lib/shaker/data
+          mountPath: /opt/shaker/data/
           readOnly: false
         - name: shaker-etc
-          mountPath: /opt/shaker/shaker.conf
+          mountPath: /opt/shaker/data/shaker.conf
           subPath: shaker.conf
           readOnly: true
 {{ if $mounts_tests.volumeMounts }}{{ toYaml $mounts_tests.volumeMounts | indent 8 }}{{ end }}
