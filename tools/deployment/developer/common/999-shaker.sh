@@ -169,6 +169,13 @@ conf:
 
     env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf"
 
+    export DATA_FOLDER_NAME=`date +%Y%m%d_%H%M%S`
+
+    mkdir /opt/shaker-data/\$DATA_FOLDER_NAME
+    cp -av ${REPORT_FILE} /opt/shaker-data/\$DATA_FOLDER_NAME/
+    cp -av ${OUTPUT_FILE} /opt/shaker-data/\$DATA_FOLDER_NAME/
+    cp -av /opt/shaker/shaker.conf /opt/shaker-data/\$DATA_FOLDER_NAME/
+
   shaker:
     shaker:
       DEFAULT:
@@ -214,6 +221,3 @@ if [ -n $EXECUTE_TEST ]; then
 helm test shaker --timeout 2700
 fi
 
-kubectl cp openstack/$POD_NAME:/opt/shaker/shaker.conf /tmp/shaker.conf
-kubectl cp openstack/$POD_NAME:${REPORT_FILE} /tmp/shaker-result.html
-kubectl cp openstack/$POD_NAME:${OUTPUT_FILE} /tmp/shaker-result.json
