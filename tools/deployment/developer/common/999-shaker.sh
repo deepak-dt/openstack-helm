@@ -195,7 +195,7 @@ conf:
     if [ $COPY_SHAKER_REPORTS_ON_HOST = "true" ]; then
       export DATA_FOLDER_NAME=`date +%Y%m%d_%H%M%S`
       mkdir ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME
-      echo $DATA_FOLDER_NAME > ${SHAKER_DATA_HOSTPATH_MOUNT}/latest-shaker-data-name.txt
+      echo \$DATA_FOLDER_NAME > ${SHAKER_DATA_HOSTPATH_MOUNT}/latest-shaker-data-name.txt
       cp -av ${SHAKER_DATA}/${REPORT_FILE} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
       cp -av ${SHAKER_DATA}/${OUTPUT_FILE} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
       cp -av ${SHAKER_CONF} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
