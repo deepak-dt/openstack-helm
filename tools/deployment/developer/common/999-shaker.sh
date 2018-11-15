@@ -26,11 +26,14 @@
 #                  export OS_USER_DOMAIN_NAME="nc"; \
 #                  export OS_IDENTITY_API_VERSION=3; \
 #                  export EXTERNAL_NETWORK_NAME="public"; \
-#                  export SCENARIO="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"; \
+#                  export SCENARIO="shaker/shaker/scenarios/openstack/full_l2.yaml"; \
 #                  export AVAILABILITY_ZONE="nova"; \
 #                  export FLAVOR_ID="m1.medium"; \
 #                  export IMAGE_NAME="shaker-image-450"; \
 #                  export SERVER_ENDPOINT_IP=""; \
+#                  export CLONE_SHAKER_SCENARIOS="false"; \
+#                  export SHAKER_SCENARIOS_REPO="https://git.openstack.org/openstack/shaker"; \
+#                  export COPY_SHAKER_REPORTS_ON_HOST="false"; \
 #                  cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/common/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
 
 set -xe
@@ -55,13 +58,13 @@ set -xe
 : ${OS_PROJECT_DOMAIN_NAME:="Default"}
 : ${OS_PROJECT_ID:=""}
 : ${EXTERNAL_NETWORK_NAME:=$OSH_EXT_NET_NAME}
-: ${SCENARIO:="/opt/shaker/shaker/scenarios/openstack/full_l2.yaml"}
+: ${SCENARIO:="shaker/shaker/scenarios/openstack/full_l2.yaml"}
 : ${AVAILABILITY_ZONE:="nova"}
 : ${OS_IDENTITY_API_VERSION:="3"}
 : ${OS_INTERFACE:="public"}
 
-: ${REPORT_FILE:="/opt/shaker/data/shaker-result.html"}
-: ${OUTPUT_FILE:="/opt/shaker/data/shaker-result.json"}
+: ${REPORT_FILE:="shaker-result.html"}
+: ${OUTPUT_FILE:="shaker-result.json"}
 : ${FLAVOR_ID:="shaker-flavor"}
 : ${IMAGE_NAME:="shaker-image"}
 : ${SERVER_ENDPOINT_IP:=""}
@@ -72,8 +75,14 @@ set -xe
 : ${EXECUTE_TEST:="true"}
 : ${DEBUG:="true"}
 : ${CLEANUP_ON_ERROR:="true"}
-: ${POD_NAME:="shaker-run-tests"}
+: ${CLONE_SHAKER_SCENARIOS:="false"}
+: ${SHAKER_SCENARIOS_REPO:="https://git.openstack.org/openstack/shaker"}
+: ${COPY_SHAKER_REPORTS_ON_HOST:="false"}
 
+# DO NOT CHANGE: Change requires update in shaker charts
+: ${SHAKER_CONF:="/opt/shaker/shaker.conf"}
+: ${SHAKER_DATA:="/opt/shaker/data"}
+: ${SHAKER_DATA_HOSTPATH_MOUNT:="/opt/shaker-data"}
 
 #NOTE: Pull images and lint chart
 make pull-images shaker
@@ -142,6 +151,12 @@ IMAGE_NAME=$(openstack image show -f value -c name \
   grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
 fi
 
+if [ $CLONE_SHAKER_SCENARIOS = "true" ]; then
+SHAKER_SCENARIO="${SHAKER_DATA}/${SCENARIO}"
+else
+SHAKER_SCENARIO="/opt/${SCENARIO}"
+fi
+
 #NOTE: Deploy shaker pods
 tee /tmp/shaker.yaml << EOF
 shaker:
@@ -152,7 +167,15 @@ images:
     shaker_run_tests: docker.io/performa/shaker:latest
 conf:
   script: |
-    sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SCENARIO}
+    #!/bin/bash
+    set -xe
+
+    # Clone the shaker test-cases
+    if [ ${CLONE_SHAKER_SCENARIOS} = "true" ]; then
+      cd ${SHAKER_DATA}; git clone $SHAKER_SCENARIOS_REPO; cd -;
+    fi
+
+    sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SHAKER_SCENARIO}
 
     if [ -z ${SERVER_ENDPOINT_IP} ]; then
     export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
@@ -164,17 +187,19 @@ conf:
     printenv | grep -i os_
 
     echo ==========  SHAKER CONF PARAMETERS  =================
-    cat /opt/shaker/shaker.conf
+    cat ${SHAKER_CONF}
     echo =====================================================
 
-    env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file /opt/shaker/shaker.conf"
+    env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:${SHAKER_PORT} --config-file ${SHAKER_CONF}"
 
-    export DATA_FOLDER_NAME=`date +%Y%m%d_%H%M%S`
-
-    mkdir /opt/shaker-data/\$DATA_FOLDER_NAME
-    cp -av ${REPORT_FILE} /opt/shaker-data/\$DATA_FOLDER_NAME/
-    cp -av ${OUTPUT_FILE} /opt/shaker-data/\$DATA_FOLDER_NAME/
-    cp -av /opt/shaker/shaker.conf /opt/shaker-data/\$DATA_FOLDER_NAME/
+    if [ $COPY_SHAKER_REPORTS_ON_HOST = "true" ]; then
+      export DATA_FOLDER_NAME=`date +%Y%m%d_%H%M%S`
+      mkdir ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME
+      echo $DATA_FOLDER_NAME > ${SHAKER_DATA_HOSTPATH_MOUNT}/latest-shaker-data-name.txt
+      cp -av ${SHAKER_DATA}/${REPORT_FILE} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
+      cp -av ${SHAKER_DATA}/${OUTPUT_FILE} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
+      cp -av ${SHAKER_CONF} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
+    fi
 
   shaker:
     shaker:
@@ -182,9 +207,9 @@ conf:
         debug: ${DEBUG}
         cleanup_on_error: ${CLEANUP_ON_ERROR}
         scenario_compute_nodes: ${COMPUTE_NODES}
-        report: ${REPORT_FILE}
-        output: ${OUTPUT_FILE}
-        scenario: ${SCENARIO}
+        report: ${SHAKER_DATA}/${REPORT_FILE}
+        output: ${SHAKER_DATA}/${OUTPUT_FILE}
+        scenario: ${SHAKER_SCENARIO}
         flavor_name: ${FLAVOR_ID}
         external_net: ${EXTERNAL_NETWORK_NAME}
         image_name: ${IMAGE_NAME}

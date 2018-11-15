@@ -122,12 +122,6 @@ conf:
 
     env -i HOME="$HOME" bash -l -c "printenv; shaker --server-endpoint \$server_endpoint:31999 --config-file /opt/shaker/shaker.conf"
 
-    export DATA_FOLDER_NAME=`date +%Y%m%d_%H%M%S`
-    mkdir -p /opt/shaker-data/\$DATA_FOLDER_NAME
-    cp -av /opt/shaker/data/shaker-result.html /opt/shaker-data/\$DATA_FOLDER_NAME/
-    cp -av /opt/shaker/data/shaker-result.json /opt/shaker-data/\$DATA_FOLDER_NAME/
-    cp -av /opt/shaker/shaker.conf /opt/shaker-data/\$DATA_FOLDER_NAME/
-
   shaker:
     auth:
       use_dynamic_credentials: true
@@ -142,8 +136,7 @@ conf:
     shaker:
       DEFAULT:
         debug: true
-        cleaniup_on_error: true
-        #server_endpoint: 172.20.9.7:31999
+        cleanup_on_error: true
         scenario_compute_nodes: 1
         report: /opt/shaker/data/shaker-result.html
         output: /opt/shaker/data/shaker-result.json
