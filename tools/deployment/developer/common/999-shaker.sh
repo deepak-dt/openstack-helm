@@ -106,7 +106,7 @@ set -xe
 make pull-images shaker
 
 #NOTE: Deploy command
-if [ -f ${SHAKER_CONF_HOST} ]; then
+if [ ! -z ${SHAKER_CONF_HOST} ] && [ -f ${SHAKER_CONF_HOST} ]; then
   SERVER_ENDPOINT_IP=`cat ${SHAKER_CONF_HOST} | awk '/server_endpoint/ {print $2}' | cut -f1 -d':'`
   SHAKER_PORT=`cat ${SHAKER_CONF_HOST} | awk '/server_endpoint/ {print $2}' | cut -f2 -d':'`
 else
@@ -197,8 +197,6 @@ conf:
       cd ${SHAKER_DATA}; git clone $SHAKER_SCENARIOS_REPO; cd -;
     fi
 
-    #sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SHAKER_SCENARIO}
-
     if [ -z ${SERVER_ENDPOINT_IP} ]; then
       export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
     else
@@ -224,8 +222,8 @@ conf:
     fi
 EOF
 
-if [ ! -f ${SHAKER_CONF_HOST} ]; then
-tee /tmp/shaker.yaml << EOF
+if [ -z ${SHAKER_CONF_HOST} ] || [ ! -f ${SHAKER_CONF_HOST} ]; then
+tee -a /tmp/shaker.yaml << EOF
   shaker:
     shaker:
       DEFAULT:
@@ -249,7 +247,7 @@ tee /tmp/shaker.yaml << EOF
 EOF
 
 if [ $OS_IDENTITY_API_VERSION = "3" ]; then
-tee /tmp/shaker.yaml << EOF
+tee -a /tmp/shaker.yaml << EOF
         os_project_domain_name: ${OS_PROJECT_DOMAIN_NAME}
         os_user_domain_name: ${OS_USER_DOMAIN_NAME}
 EOF
