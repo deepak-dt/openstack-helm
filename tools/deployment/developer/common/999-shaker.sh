@@ -257,8 +257,8 @@ fi
 
 else
 
-echo"  shaker:" >> /tmp/shaker.yaml
-echo"    shaker:" >> /tmp/shaker.yaml
+echo "  shaker:" >> /tmp/shaker.yaml
+echo "    shaker:" >> /tmp/shaker.yaml
 sed -i -e 's/^/      /' ${SHAKER_CONF_HOST} 
 cat ${SHAKER_CONF_HOST} >> /tmp/shaker.yaml
 
