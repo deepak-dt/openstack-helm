@@ -14,27 +14,43 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+#-----------------------------------------------------------------------
+# Two ways to invoke this script
+#-----------------------------------------------------------------------
+# 1. Provide a shaker.conf file listing the shaker configuration params
+#    which should go as input to shaker
+# 2. Provide the parameters explicitly
+#----------------------------------------------------------------------
+
+# (1):
+# sudo -H -E su -c 'export SHAKER_CONF_HOST="/tmp/shaker.conf"; \
+#                   export CLONE_SHAKER_SCENARIOS="false"; \
+#                   export SHAKER_SCENARIOS_REPO="https://git.openstack.org/openstack/shaker"; \
+#                   export COPY_SHAKER_REPORTS_ON_HOST="false"; \
+#                   cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/common/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
+
+# (2):
 # sudo -H -E su -c 'export OSH_EXT_NET_NAME="public"; \
-#                  export OSH_EXT_SUBNET_NAME="public-subnet"; \
-#                  export OS_USERNAME="dt967u"; \
-#                  export OS_PASSWORD=""; \
-#                  export OS_AUTH_URL="https://identity-nc.mtn13b3.cci.att.com:443/v3"; \
-#                  export OS_PROJECT_NAME="taas-testing"; \
-#                  export OS_REGION_NAME="mtn13b3"; \
-#                  export OS_PROJECT_ID=af7dac7909754202a0edc58e663f22fe; \
-#                  export OS_PROJECT_DOMAIN_NAME="nc"; \
-#                  export OS_USER_DOMAIN_NAME="nc"; \
-#                  export OS_IDENTITY_API_VERSION=3; \
-#                  export EXTERNAL_NETWORK_NAME="public"; \
-#                  export SCENARIO="shaker/shaker/scenarios/openstack/full_l2.yaml"; \
-#                  export AVAILABILITY_ZONE="nova"; \
-#                  export FLAVOR_ID="m1.medium"; \
-#                  export IMAGE_NAME="shaker-image-450"; \
-#                  export SERVER_ENDPOINT_IP=""; \
-#                  export CLONE_SHAKER_SCENARIOS="false"; \
-#                  export SHAKER_SCENARIOS_REPO="https://git.openstack.org/openstack/shaker"; \
-#                  export COPY_SHAKER_REPORTS_ON_HOST="false"; \
-#                  cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/common/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
+#                   export OSH_EXT_SUBNET_NAME="public-subnet"; \
+#                   export OS_USERNAME="dt967u"; \
+#                   export OS_PASSWORD=""; \
+#                   export OS_AUTH_URL="https://identity-nc.mtn13b3.cci.att.com:443/v3"; \
+#                   export OS_PROJECT_NAME="taas-testing"; \
+#                   export OS_REGION_NAME="mtn13b3"; \
+#                   export OS_PROJECT_ID=af7dac7909754202a0edc58e663f22fe; \
+#                   export OS_PROJECT_DOMAIN_NAME="nc"; \
+#                   export OS_USER_DOMAIN_NAME="nc"; \
+#                   export OS_IDENTITY_API_VERSION=3; \
+#                   export EXTERNAL_NETWORK_NAME="public"; \
+#                   export SCENARIO="shaker/shaker/scenarios/openstack/full_l2.yaml"; \
+#                   export AVAILABILITY_ZONE="nova"; \
+#                   export FLAVOR_ID="m1.medium"; \
+#                   export IMAGE_NAME="shaker-image-450"; \
+#                   export SERVER_ENDPOINT_IP=""; \
+#                   export CLONE_SHAKER_SCENARIOS="false"; \
+#                   export SHAKER_SCENARIOS_REPO="https://git.openstack.org/openstack/shaker"; \
+#                   export COPY_SHAKER_REPORTS_ON_HOST="false"; \
+#                   cd $CURR_WORK/openstack-helm; ./tools/deployment/developer/common/999-shaker.sh ${OSH_EXTRA_HELM_ARGS}' ${username}
 
 set -xe
 
@@ -78,83 +94,89 @@ set -xe
 : ${CLONE_SHAKER_SCENARIOS:="false"}
 : ${SHAKER_SCENARIOS_REPO:="https://git.openstack.org/openstack/shaker"}
 : ${COPY_SHAKER_REPORTS_ON_HOST:="false"}
+: ${SHAKER_CONF_HOST:=""}
 
 # DO NOT CHANGE: Change requires update in shaker charts
 : ${SHAKER_CONF:="/opt/shaker/shaker.conf"}
 : ${SHAKER_DATA:="/opt/shaker/data"}
 : ${SHAKER_DATA_HOSTPATH_MOUNT:="/opt/shaker-data"}
+: ${SHAKER_DATA_HOSTPATH:="/tmp/shaker-data"}
 
 #NOTE: Pull images and lint chart
 make pull-images shaker
 
 #NOTE: Deploy command
-
-# Export AUTH variables required by shaker-image-builder utility
-export OS_USERNAME=${OS_USERNAME}
-export OS_PASSWORD=${OS_PASSWORD}
-export OS_AUTH_URL=${OS_AUTH_URL}
-export OS_PROJECT_NAME=${OS_PROJECT_NAME}
-export OS_REGION_NAME=${OS_REGION_NAME}
-export EXTERNAL_NETWORK_NAME=${EXTERNAL_NETWORK_NAME}
-export OS_PROJECT_ID=${OS_PROJECT_ID}
-
-if [ $OS_IDENTITY_API_VERSION = "3" ]; then
-export OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME}
-export OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME}
+if [ -f ${SHAKER_CONF_HOST} ]; then
+  SERVER_ENDPOINT_IP=`cat ${SHAKER_CONF_HOST} | awk '/server_endpoint/ {print $2}' | cut -f1 -d':'`
+  SHAKER_PORT=`cat ${SHAKER_CONF_HOST} | awk '/server_endpoint/ {print $2}' | cut -f2 -d':'`
 else
-export OS_PROJECT_DOMAIN_NAME=
-export OS_USER_DOMAIN_NAME=
-fi
+  # Export AUTH variables required by shaker-image-builder utility
+  export OS_USERNAME=${OS_USERNAME}
+  export OS_PASSWORD=${OS_PASSWORD}
+  export OS_AUTH_URL=${OS_AUTH_URL}
+  export OS_PROJECT_NAME=${OS_PROJECT_NAME}
+  export OS_REGION_NAME=${OS_REGION_NAME}
+  export EXTERNAL_NETWORK_NAME=${EXTERNAL_NETWORK_NAME}
+  export OS_PROJECT_ID=${OS_PROJECT_ID}
 
-export stack_exists=`openstack network list | grep ${OSH_EXT_NET_NAME} | awk '{print $4}'`
+  if [ $OS_IDENTITY_API_VERSION = "3" ]; then
+    export OS_PROJECT_DOMAIN_NAME=${OS_PROJECT_DOMAIN_NAME}
+    export OS_USER_DOMAIN_NAME=${OS_USER_DOMAIN_NAME}
+  else
+    export OS_PROJECT_DOMAIN_NAME=
+    export OS_USER_DOMAIN_NAME=
+  fi
 
-if [ -z $stack_exists ]; then
-openstack stack create --wait \
-  --parameter network_name=${OSH_EXT_NET_NAME} \
-  --parameter physical_network_name=${OSH_EXT_NET_NAME} \
-  --parameter subnet_name=${OSH_EXT_SUBNET_NAME} \
-  --parameter subnet_cidr=${OSH_EXT_SUBNET} \
-  --parameter subnet_gateway=${OSH_BR_EX_ADDR%/*} \
-  -t ./tools/gate/files/heat-public-net-deployment.yaml \
-  heat-public-net-deployment
-fi
+  export stack_exists=`openstack network list | grep ${OSH_EXT_NET_NAME} | awk '{print $4}'`
 
-default_sec_grp_id=`openstack security group list --project ${OS_PROJECT_NAME} | grep default | awk '{split(\$0,a,"|"); print a[2]}'`
-for sg in $default_sec_grp_id
-do
-  icmp=`openstack security group rule list $sg | grep icmp | awk '{split(\$0,a,"|"); print a[2]}'`
-  if [ "${icmp}" = "" ]; then openstack security group rule create --proto icmp $sg; fi
-  shaker=`openstack security group rule list $sg | grep tcp | grep ${SHAKER_PORT} | awk '{split(\$0,a,"|"); print a[2]}'`
-  if [ "${shaker}" = "" ]; then openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $sg; fi
-done
+  if [ -z $stack_exists ]; then
+    openstack stack create --wait \
+      --parameter network_name=${OSH_EXT_NET_NAME} \
+      --parameter physical_network_name=${OSH_EXT_NET_NAME} \
+      --parameter subnet_name=${OSH_EXT_SUBNET_NAME} \
+      --parameter subnet_cidr=${OSH_EXT_SUBNET} \
+      --parameter subnet_gateway=${OSH_BR_EX_ADDR%/*} \
+      -t ./tools/gate/files/heat-public-net-deployment.yaml \
+      heat-public-net-deployment
+  fi
 
-IMAGE_NAME=$(openstack image show -f value -c name \
+  default_sec_grp_id=`openstack security group list --project ${OS_PROJECT_NAME} | grep default | awk '{split(\$0,a,"|"); print a[2]}'`
+  for sg in $default_sec_grp_id
+  do
+    icmp=`openstack security group rule list $sg | grep icmp | awk '{split(\$0,a,"|"); print a[2]}'`
+    if [ "${icmp}" = "" ]; then openstack security group rule create --proto icmp $sg; fi
+    shaker=`openstack security group rule list $sg | grep tcp | grep ${SHAKER_PORT} | awk '{split(\$0,a,"|"); print a[2]}'`
+    if [ "${shaker}" = "" ]; then openstack security group rule create --proto tcp --dst-port ${SHAKER_PORT} $sg; fi
+  done
+
+  IMAGE_NAME=$(openstack image show -f value -c name \
   $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
   grep "${IMAGE_NAME}" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
 
-if [ -z $IMAGE_NAME ]; then
-# Install shaker to use shaker-image-builder utility
-sudo apt-add-repository "deb http://nova.clouds.archive.ubuntu.com/ubuntu/ trusty multiverse"
-sudo apt-get update
-sudo apt-get -y install python-dev libzmq-dev
-sudo pip install pbr pyshaker
+  if [ -z $IMAGE_NAME ]; then
+  # Install shaker to use shaker-image-builder utility
+    sudo apt-add-repository "deb http://nova.clouds.archive.ubuntu.com/ubuntu/ trusty multiverse"
+    sudo apt-get update
+    sudo apt-get -y install python-dev libzmq-dev
+    sudo pip install pbr pyshaker
 
-# Run shaker-image-builder utility to build shaker image
-# For debug mode
-# shaker-image-builder --nocleanup-on-error --debug
-# For debug mode - with disk-image-builder mode
-# shaker-image-builder --nocleanup-on-error --debug --image-builder-mode dib
-shaker-image-builder
+    # Run shaker-image-builder utility to build shaker image
+    # For debug mode
+    # shaker-image-builder --nocleanup-on-error --debug
+    # For debug mode - with disk-image-builder mode
+    # shaker-image-builder --nocleanup-on-error --debug --image-builder-mode dib
+    shaker-image-builder
 
-IMAGE_NAME=$(openstack image show -f value -c name \
-  $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
-  grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
-fi
+    IMAGE_NAME=$(openstack image show -f value -c name \
+      $(openstack image list -f csv | awk -F ',' '{ print $2 "," $1 }' | \
+      grep "^\"shaker" | head -1 | awk -F ',' '{ print $2 }' | tr -d '"'))
+  fi
 
-if [ $CLONE_SHAKER_SCENARIOS = "true" ]; then
-SHAKER_SCENARIO="${SHAKER_DATA}/${SCENARIO}"
-else
-SHAKER_SCENARIO="/opt/${SCENARIO}"
+  if [ $CLONE_SHAKER_SCENARIOS = "true" ]; then
+    SHAKER_SCENARIO="${SHAKER_DATA}/${SCENARIO}"
+  else
+    SHAKER_SCENARIO="/opt/${SCENARIO}"
+  fi
 fi
 
 #NOTE: Deploy shaker pods
@@ -175,12 +197,12 @@ conf:
       cd ${SHAKER_DATA}; git clone $SHAKER_SCENARIOS_REPO; cd -;
     fi
 
-    sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SHAKER_SCENARIO}
+    #sed -i -E "s/(accommodation\: \[.+)(.+\])/accommodation\: \[pair, compute_nodes: 1\]/" ${SHAKER_SCENARIO}
 
     if [ -z ${SERVER_ENDPOINT_IP} ]; then
-    export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
+      export server_endpoint=\`ip a | grep "global ${SERVER_ENDPOINT_INTF}" | cut -f6 -d' ' | cut -f1 -d'/'\`
     else
-    export server_endpoint=${SERVER_ENDPOINT_IP}
+      export server_endpoint=${SERVER_ENDPOINT_IP}
     fi
 
     echo ===========================
@@ -200,7 +222,10 @@ conf:
       cp -av ${SHAKER_DATA}/${OUTPUT_FILE} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
       cp -av ${SHAKER_CONF} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
     fi
+EOF
 
+if [ ! -f ${SHAKER_CONF_HOST} ]; then
+tee /tmp/shaker.yaml << EOF
   shaker:
     shaker:
       DEFAULT:
@@ -230,6 +255,15 @@ tee /tmp/shaker.yaml << EOF
 EOF
 fi
 
+else
+
+echo"  shaker:" >> /tmp/shaker.yaml
+echo"    shaker:" >> /tmp/shaker.yaml
+sed -i -e 's/^/      /' ${SHAKER_CONF_HOST} 
+cat ${SHAKER_CONF_HOST} >> /tmp/shaker.yaml
+
+fi
+
 helm upgrade --install shaker ./shaker \
   --namespace=openstack \
   --values=/tmp/shaker.yaml \
@@ -243,6 +277,12 @@ helm upgrade --install shaker ./shaker \
 kubectl get -n openstack jobs --show-all
 
 if [ -n $EXECUTE_TEST ]; then
-helm test shaker --timeout 2700
+  helm test shaker --timeout 2700
+
+  if [ $COPY_SHAKER_REPORTS_ON_HOST = "true" ]; then
+    shaker_pod_name=`kubectl -n openstack get pods | grep shaker-run-tests | cut -f1 -d' '`
+    latest_data_folder=`cat ${SHAKER_DATA_HOSTPATH}/latest-shaker-data-name.txt`
+    kubectl -n openstack logs ${shaker_pod_name} > ${SHAKER_DATA_HOSTPATH}/${latest_data_folder}/${shaker_pod_name}.logs
+  fi
 fi
 
