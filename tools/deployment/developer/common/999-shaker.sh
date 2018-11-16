@@ -216,14 +216,12 @@ conf:
       export DATA_FOLDER_NAME=`date +%Y%m%d_%H%M%S`
       mkdir ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME
       echo \$DATA_FOLDER_NAME > ${SHAKER_DATA_HOSTPATH_MOUNT}/latest-shaker-data-name.txt
-      cp -av ${SHAKER_DATA}/${REPORT_FILE} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
-      cp -av ${SHAKER_DATA}/${OUTPUT_FILE} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
-      cp -av ${SHAKER_CONF} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
-      cp -av ${SHAKER_DATA}/*.html ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
-      cp -av ${SHAKER_DATA}/*.json ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
-      cp -av ${SHAKER_DATA}/*.subunit ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
-      cp -av ${SHAKER_DATA}/*.conf ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
-      cp -av ${SHAKER_DATA}/*.yaml ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
+      declare -a file_extns_arr_to_copy=(html json subunit conf yaml stream)
+      for i in "\${file_extns_arr_to_copy[@]}"
+      do
+        if [ -e ${SHAKER_DATA}/*.\$i ]; then cp -avb ${SHAKER_DATA}/*.\$i ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/; fi
+      done
+      cp -avb ${SHAKER_CONF} ${SHAKER_DATA_HOSTPATH_MOUNT}/\$DATA_FOLDER_NAME/
     fi
 EOF
 
