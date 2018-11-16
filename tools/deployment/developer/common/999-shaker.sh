@@ -259,8 +259,10 @@ else
 
 echo "  shaker:" >> /tmp/shaker.yaml
 echo "    shaker:" >> /tmp/shaker.yaml
-sed -i -e 's/^/      /' ${SHAKER_CONF_HOST} 
-cat ${SHAKER_CONF_HOST} >> /tmp/shaker.yaml
+cp ${SHAKER_CONF_HOST} ${SHAKER_CONF_HOST}.tmp
+sed -i -e 's/^/      /' ${SHAKER_CONF_HOST}.tmp
+cat ${SHAKER_CONF_HOST}.tmp >> /tmp/shaker.yaml
+rm -rf ${SHAKER_CONF_HOST}.tmp
 
 fi
 
